@@ -1,7 +1,68 @@
-arxiv:
-  categories:  # 文章类型
+crawler:
+  paper_sources:
+    - pubmed
+    - biorxiv
+    - medrxiv
+  arxiv_categories:
     - cs.CV
     - cs.CL
+  biorxiv_categories:
+    - immunology
+    - cancer biology
+  medrxiv_categories:
+    - oncology
+    - immunology
+  keywords:
+    - PD-L1
+    - Programmed Death-Ligand 1
+    - CD274
+    - B7-H1
+    - anti-PD-L1
+    - PD-L1 antibody
+    - PD-L1 antibodies
+    - programmed death-ligand 1 antibody
+    - atezolizumab
+    - durvalumab
+    - avelumab
+    - envafolimab
+    - sugemalimab
+    - adebrelimab
+    - socazolimab
+    - KN035
+  keyword_groups:
+    -
+      - pd-l1
+      - programmed death-ligand 1
+      - cd274
+      - b7-h1
+    -
+      - anti-pd-l1
+      - pd-l1 antibody
+      - pd-l1 antibodies
+      - programmed death-ligand 1 antibody
+      - atezolizumab
+      - durvalumab
+      - avelumab
+      - envafolimab
+      - sugemalimab
+      - adebrelimab
+      - socazolimab
+      - kn035
+  rxiv_lookback_days: 30
+
+pubmed:
+  query: >-
+    (("PD-L1"[Title/Abstract] OR "Programmed Death-Ligand 1"[Title/Abstract] OR CD274[Title/Abstract] OR "B7-H1"[Title/Abstract])
+    AND
+    ("anti-PD-L1"[Title/Abstract] OR "PD-L1 antibody"[Title/Abstract] OR "PD-L1 antibodies"[Title/Abstract]
+    OR "programmed death-ligand 1 antibody"[Title/Abstract] OR atezolizumab[Title/Abstract] OR durvalumab[Title/Abstract]
+    OR avelumab[Title/Abstract] OR envafolimab[Title/Abstract] OR sugemalimab[Title/Abstract]
+    OR adebrelimab[Title/Abstract] OR socazolimab[Title/Abstract] OR KN035[Title/Abstract]))
+  label: PD-L1 Antibody
+  retmax: 200
+  date_type: pdat
 
 llm:
-  model_name: 'deepseek-chat'  # 使用的LLM模型
+  model_name: qwen3.6-plus
+  language: Chinese
+  openai_base_url: https://dashscope.aliyuncs.com/compatible-mode/v1

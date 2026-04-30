@@ -9,6 +9,16 @@
 
 const DATA_CONFIG = {
     /**
+     * Display name used across the frontend
+     */
+    siteDisplayName: 'Daily Paper AI Enhanced',
+
+    /**
+     * Human-readable summary of supported sources
+     */
+    sourceSummary: 'arXiv, bioRxiv, medRxiv, and PubMed',
+
+    /**
      * GitHub repository owner (username)
      * This will be replaced during GitHub Actions workflow execution
      */
@@ -27,11 +37,44 @@ const DATA_CONFIG = {
     dataBranch: 'data',
 
     /**
+     * Detect whether the frontend is running from a local preview server.
+     * In local preview we should read files from the checked-out workspace
+     * instead of the remote GitHub data branch.
+     */
+    isLocalPreview: function() {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        const { protocol, hostname } = window.location;
+        return protocol === 'file:' || hostname === '127.0.0.1' || hostname === 'localhost';
+    },
+
+    /**
      * Get the base URL for raw GitHub content from data branch
      * @returns {string} Base URL for raw GitHub content
      */
     getDataBaseUrl: function() {
+        if (this.isLocalPreview()) {
+            return '';
+        }
         return `https://raw.githubusercontent.com/${this.repoOwner}/${this.repoName}/${this.dataBranch}`;
+    },
+
+    /**
+     * Get the repository web URL
+     * @returns {string} Repository homepage URL
+     */
+    getRepoWebUrl: function() {
+        return `https://github.com/${this.repoOwner}/${this.repoName}`;
+    },
+
+    /**
+     * Get the repository API URL
+     * @returns {string} GitHub REST API repository endpoint
+     */
+    getRepoApiUrl: function() {
+        return `https://api.github.com/repos/${this.repoOwner}/${this.repoName}`;
     },
 
     /**
@@ -40,7 +83,7 @@ const DATA_CONFIG = {
      * @returns {string} Full URL to the data file
      */
     getDataUrl: function(filePath) {
-        return `${this.getDataBaseUrl()}/${filePath}`;
+        const baseUrl = this.getDataBaseUrl();
+        return baseUrl ? `${baseUrl}/${filePath}` : filePath;
     }
 };
-

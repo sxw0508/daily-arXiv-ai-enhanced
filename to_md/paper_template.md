@@ -1,6 +1,8 @@
 ### [{idx}] [{title}]({url})
 *{authors}*
 
+Source: {source}
+
 Main category: {cate}
 
 TL;DR: {tldr}

@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict
 from queue import Queue
 from threading import Lock
+from pathlib import Path
 # INSERT_YOUR_CODE
 import requests
 
@@ -20,6 +21,13 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SCRAPY_PACKAGE_ROOT = PROJECT_ROOT / "daily_arxiv"
+if str(SCRAPY_PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRAPY_PACKAGE_ROOT))
+
+from daily_arxiv.source_utils import get_text_env
 from structure import Structure
 
 if os.path.exists('.env'):
@@ -40,6 +48,9 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         调用 spam.dw-dengwei.workers.dev 接口检测内容是否包含敏感词。
         返回 True 表示触发敏感词，False 表示未触发。
         """
+        if os.environ.get("DISABLE_SENSITIVE_CHECK", "").lower() in {"1", "true", "yes"}:
+            return False
+
         try:
             resp = requests.post(
                 "https://spam.dw-dengwei.workers.dev",
@@ -51,12 +62,12 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
                 # 约定接口返回 {"sensitive": true/false, ...}
                 return result.get("sensitive", True)
             else:
-                # 如果接口异常，默认不触发敏感词
+                # 如果接口异常，默认不触发敏感词，避免误删全部结果
                 print(f"Sensitive check failed with status {resp.status_code}", file=sys.stderr)
-                return True
+                return False
         except Exception as e:
             print(f"Sensitive check error: {e}", file=sys.stderr)
-            return True
+            return False
 
     def check_github_code(content: str) -> Dict:
         """提取并验证 GitHub 链接"""
@@ -167,8 +178,34 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
 
 def process_all_items(data: List[Dict], model_name: str, language: str, max_workers: int) -> List[Dict]:
     """并行处理所有数据项"""
-    llm = ChatOpenAI(model=model_name).with_structured_output(Structure, method="function_calling")
-    print('Connect to:', model_name, file=sys.stderr)
+    llm_kwargs = {"model": model_name}
+    api_key = os.environ.get("OPENAI_API_KEY") or get_text_env(
+        "OPENAI_API_KEY",
+        "llm.openai_api_key",
+    )
+    base_url = (
+        os.environ.get("OPENAI_API_BASE")
+        or get_text_env("OPENAI_BASE_URL", "llm.openai_base_url")
+    )
+
+    if api_key:
+        llm_kwargs["api_key"] = api_key
+    if base_url:
+        llm_kwargs["base_url"] = base_url
+    if base_url and "dashscope.aliyuncs.com/compatible-mode" in base_url and model_name.lower().startswith("qwen"):
+        # DashScope 的 Qwen 在结构化输出/Function Calling 下需要关闭 thinking mode，
+        # 否则 tool_choice=required/object 会报 invalid_parameter_error。
+        llm_kwargs["extra_body"] = {"enable_thinking": False}
+
+    llm = ChatOpenAI(**llm_kwargs).with_structured_output(
+        Structure,
+        method="function_calling",
+    )
+    print(f"Connect to model: {model_name}", file=sys.stderr)
+    if base_url:
+        print(f"OpenAI-compatible base URL: {base_url}", file=sys.stderr)
+    if llm_kwargs.get("extra_body"):
+        print(f"Extra request body: {llm_kwargs['extra_body']}", file=sys.stderr)
     
     prompt_template = ChatPromptTemplate.from_messages([
         SystemMessagePromptTemplate.from_template(system),
@@ -212,8 +249,8 @@ def process_all_items(data: List[Dict], model_name: str, language: str, max_work
 
 def main():
     args = parse_args()
-    model_name = os.environ.get("MODEL_NAME", 'deepseek-chat')
-    language = os.environ.get("LANGUAGE", 'Chinese')
+    model_name = get_text_env("MODEL_NAME", "llm.model_name", "deepseek-chat")
+    language = get_text_env("LANGUAGE", "llm.language", "Chinese")
 
     # 检查并删除目标文件
     target_file = args.data.replace('.jsonl', f'_AI_enhanced_{language}.jsonl')

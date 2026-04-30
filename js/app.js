@@ -253,12 +253,16 @@ function outputJsonData(papers, category) {
     count: papers.length,
     papers: papers.map(p => ({
       id: p.id,
+      source: p.source,
+      source_label: p.sourceLabel,
       title: p.title,
       authors: p.authors,
       categories: p.category,
       summary: p.summary,
       date: p.date,
       url: p.url,
+      pdf_url: p.pdf_url || null,
+      html_url: p.html_url || null,
       reason: p.matchReason
     }))
   };
@@ -269,6 +273,43 @@ function outputJsonData(papers, category) {
 
   // 设置JSON内容
   document.body.textContent = JSON.stringify(jsonData, null, 2);
+}
+
+function inferSourceLabel(paper) {
+  if (paper.source_label) return paper.source_label;
+  if (paper.source) {
+    if (paper.source === 'arxiv') return 'arXiv';
+    if (paper.source === 'biorxiv') return 'bioRxiv';
+    if (paper.source === 'medrxiv') return 'medRxiv';
+    if (paper.source === 'pubmed') return 'PubMed';
+    return paper.source;
+  }
+
+  const absUrl = paper.abs || paper.html || paper.pdf || '';
+  if (absUrl.includes('arxiv.org')) return 'arXiv';
+  if (absUrl.includes('biorxiv.org')) return 'bioRxiv';
+  if (absUrl.includes('medrxiv.org')) return 'medRxiv';
+  if (absUrl.includes('pubmed.ncbi.nlm.nih.gov')) return 'PubMed';
+  return 'Unknown';
+}
+
+function getPrimaryPaperUrl(paper) {
+  const sourceId = paper.source_id || (paper.id && paper.id.startsWith('arxiv:') ? paper.id.slice(6) : paper.id);
+  return paper.abs || paper.html || paper.pdf || `https://arxiv.org/abs/${sourceId}`;
+}
+
+function getPaperPdfUrl(paper) {
+  if (paper.pdf) return paper.pdf;
+  if (paper.abs && paper.abs.includes('arxiv.org/abs/')) {
+    return paper.abs.replace('/abs/', '/pdf/');
+  }
+  return '';
+}
+
+function getPaperHtmlUrl(paper) {
+  if (paper.html) return paper.html;
+  if (paper.abs) return paper.abs;
+  return getPrimaryPaperUrl(paper);
 }
 
 // 根据category获取论文（复用现有逻辑）
@@ -370,8 +411,6 @@ function matchPapersByKeywordsOrAuthor(papers, keywords, author) {
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
 
-  fetchGitHubStats();
-
   // 加载用户关键词
   loadUserKeywords();
 
@@ -390,22 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-async function fetchGitHubStats() {
-  try {
-    const response = await fetch('https://api.github.com/repos/dw-dengwei/daily-arXiv-ai-enhanced');
-    const data = await response.json();
-    const starCount = data.stargazers_count;
-    const forkCount = data.forks_count;
-    
-    document.getElementById('starCount').textContent = starCount;
-    document.getElementById('forkCount').textContent = forkCount;
-  } catch (error) {
-    console.error('获取GitHub统计数据失败:', error);
-    document.getElementById('starCount').textContent = '?';
-    document.getElementById('forkCount').textContent = '?';
-  }
-}
 
 function initEventListeners() {
   // 日期选择器相关的事件监听
@@ -904,10 +927,14 @@ function parseJsonlData(jsonlText, date) {
       const paper = JSON.parse(line);
       
       if (!paper.categories) {
-        return;
+        paper.categories = [inferSourceLabel(paper)];
       }
       
       let allCategories = Array.isArray(paper.categories) ? paper.categories : [paper.categories];
+      allCategories = allCategories.filter(category => !!category);
+      if (allCategories.length === 0) {
+        allCategories = [inferSourceLabel(paper)];
+      }
       
       const primaryCategory = allCategories[0];
       
@@ -916,16 +943,22 @@ function parseJsonlData(jsonlText, date) {
       }
       
       const summary = paper.AI && paper.AI.tldr ? paper.AI.tldr : paper.summary;
+      const sourceLabel = inferSourceLabel(paper);
       
       result[primaryCategory].push({
         title: paper.title,
-        url: paper.abs || paper.pdf || `https://arxiv.org/abs/${paper.id}`,
+        url: getPrimaryPaperUrl(paper),
+        pdf_url: getPaperPdfUrl(paper),
+        html_url: getPaperHtmlUrl(paper),
         authors: Array.isArray(paper.authors) ? paper.authors.join(', ') : paper.authors,
         category: allCategories,
+        allCategories: allCategories,
         summary: summary,
         details: paper.summary || '',
-        date: date,
+        date: paper.posted_date || paper.published || date,
         id: paper.id,
+        source: paper.source || '',
+        sourceLabel: sourceLabel,
         motivation: paper.AI && paper.AI.motivation ? paper.AI.motivation : '',
         method: paper.AI && paper.AI.method ? paper.AI.method : '',
         result: paper.AI && paper.AI.result ? paper.AI.result : '',
@@ -1350,12 +1383,14 @@ function renderPapers() {
     
     if (paper.isMatched) {
       // 添加匹配原因提示
-      paperCard.title = `匹配: ${paper.matchReason.join(' | ')}`;
+      const matchReasons = Array.isArray(paper.matchReason) ? paper.matchReason : [paper.matchReason];
+      paperCard.title = `匹配: ${matchReasons.filter(Boolean).join(' | ')}`;
     }
     
     const categoryTags = paper.allCategories ? 
       paper.allCategories.map(cat => `<span class="category-tag">${cat}</span>`).join('') : 
       `<span class="category-tag">${paper.category}</span>`;
+    const sourceTag = `<span class="category-tag">${paper.sourceLabel || 'Unknown'}</span>`;
     
     // 组合需要高亮的词：关键词 + 文本搜索
     const titleSummaryTerms = [];
@@ -1406,13 +1441,14 @@ function renderPapers() {
         <h3 class="paper-card-title">${highlightedTitle}</h3>
         <p class="paper-card-authors">${formattedAuthors}</p>
         <div class="paper-card-categories">
-          ${categoryTags}
+          ${sourceTag}${categoryTags}
         </div>
       </div>
       <div class="paper-card-body">
         <p class="paper-card-summary">${highlightedSummary}</p>
         <div class="paper-card-footer">
           <div class="footer-left">
+            <span class="paper-card-date">${paper.sourceLabel || 'Unknown'}</span>
             <span class="paper-card-date">${formatDate(paper.date)}</span>
           </div>
           <span class="paper-card-link">Details</span>
@@ -1436,6 +1472,26 @@ function showPaperDetails(paper, paperIndex) {
   const paperLink = document.getElementById('paperLink');
   const pdfLink = document.getElementById('pdfLink');
   const htmlLink = document.getElementById('htmlLink');
+  const pdfUrl = paper.pdf_url || '';
+  const htmlUrl = paper.html_url || paper.url;
+  const pdfPreviewSection = pdfUrl ? `
+      <div class="pdf-preview-section">
+        <div class="pdf-header">
+          <h3>PDF Preview</h3>
+          <button class="pdf-expand-btn" onclick="togglePdfSize(this)">
+            <svg class="expand-icon" viewBox="0 0 24 24" width="24" height="24">
+              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+            <svg class="collapse-icon" viewBox="0 0 24 24" width="24" height="24" style="display: none;">
+              <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="pdf-container">
+          <iframe src="${pdfUrl}" width="100%" height="800px" frameborder="0"></iframe>
+        </div>
+      </div>
+    ` : '';
   
   // 重置模态框的滚动位置
   modalBody.scrollTop = 0;
@@ -1502,6 +1558,7 @@ function showPaperDetails(paper, paperIndex) {
   const modalContent = `
     <div class="paper-details ${matchedPaperClass}">
       <p><strong>Authors: </strong>${highlightedAuthors}</p>
+      <p><strong>Source: </strong>${paper.sourceLabel || 'Unknown'}</p>
       <p><strong>Categories: </strong>${categoryDisplay}</p>
       <p><strong>Date: </strong>${formatDate(paper.date)}</p>
       
@@ -1517,46 +1574,24 @@ function showPaperDetails(paper, paperIndex) {
       </div>
       
       ${highlightedAbstract ? `<h3>Abstract</h3><p class="original-abstract">${highlightedAbstract}</p>` : ''}
-      
-      <div class="pdf-preview-section">
-        <div class="pdf-header">
-          <h3>PDF Preview</h3>
-          <button class="pdf-expand-btn" onclick="togglePdfSize(this)">
-            <svg class="expand-icon" viewBox="0 0 24 24" width="24" height="24">
-              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-            </svg>
-            <svg class="collapse-icon" viewBox="0 0 24 24" width="24" height="24" style="display: none;">
-              <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="pdf-container">
-          <iframe src="${paper.url.replace('abs', 'pdf')}" width="100%" height="800px" frameborder="0"></iframe>
-        </div>
-      </div>
+      ${pdfPreviewSection}
     </div>
   `;
   
   // Update modal content
   document.getElementById('modalBody').innerHTML = modalContent;
   document.getElementById('paperLink').href = paper.url;
-  document.getElementById('pdfLink').href = paper.url.replace('abs', 'pdf');
-  document.getElementById('htmlLink').href = paper.url.replace('abs', 'html');
+  document.getElementById('paperLink').title = paper.sourceLabel
+    ? `Open in ${paper.sourceLabel}`
+    : 'Open paper page';
+  document.getElementById('pdfLink').href = pdfUrl || paper.url;
+  document.getElementById('htmlLink').href = htmlUrl;
+  document.getElementById('pdfLink').style.display = pdfUrl ? 'inline-flex' : 'none';
+  document.getElementById('htmlLink').style.display = htmlUrl ? 'inline-flex' : 'none';
   
-  // --- GitHub Button Logic ---
-  const githubLink = document.getElementById('githubLink');
-  
-  if (paper.code_url) {
-    githubLink.href = paper.code_url;
-    githubLink.style.display = 'flex'; 
-    githubLink.title = "View Code on GitHub";
-  } else {
-    githubLink.style.display = 'none';
-  }
-  // ---------------------------
-
   // 提示词来自：https://papers.cool/
-  prompt = `请你阅读这篇文章${paper.url.replace('abs', 'pdf')},总结一下这篇文章解决的问题、相关工作、研究方法、做了什么实验及其结果、结论，最后整体总结一下这篇文章的内容`
+  const readingUrl = pdfUrl || htmlUrl || paper.url;
+  prompt = `请你阅读这篇文章${readingUrl},总结一下这篇文章解决的问题、相关工作、研究方法、做了什么实验及其结果、结论，最后整体总结一下这篇文章的内容`
   document.getElementById('kimiChatLink').href = `https://www.kimi.com/_prefill_chat?prefill_prompt=${prompt}&system_prompt=你是一个学术助手，后面的对话将围绕着以下论文内容进行，已经通过链接给出了论文的PDF和论文已有的FAQ。用户将继续向你咨询论文的相关问题，请你作出专业的回答，不要出现第一人称，当涉及到分点回答时，鼓励你以markdown格式输出。&send_immediately=true&force_search=true`;
   
   // 更新论文位置信息

@@ -8,7 +8,8 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, help="Path to the jsonline file")
     args = parser.parse_args()
     data = []
-    preference = os.environ.get('CATEGORIES', 'cs.CV, cs.CL').split(',')
+    category_preference = os.environ.get('ARXIV_CATEGORIES') or os.environ.get('CATEGORIES', 'cs.CV, cs.CL')
+    preference = category_preference.split(',')
     preference = list(map(lambda x: x.strip(), preference))
     def rank(cate):
         if cate in preference:
@@ -58,6 +59,7 @@ if __name__ == "__main__":
                         authors=",".join(item["authors"]),
                         summary=item["summary"],
                         url=item['abs'],
+                        source=item.get('source_label', item.get('source', 'Unknown')),
                         tldr=ai_data.get('tldr', ''),
                         motivation=ai_data.get('motivation', ''),
                         method=ai_data.get('method', ''),

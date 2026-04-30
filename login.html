@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Access Verification - daily-arXiv-ai-enhanced</title>
+    <title>Access Verification - Daily Paper AI Enhanced</title>
+    <script src="js/data-config.js"></script>
+    <script src="js/site-config.js"></script>
     <style>
         /* Clean login page styling */
         body {
@@ -143,11 +145,11 @@
 <body>
     <div class="login-container">
         <a href="index.html" class="site-logo">
-            <img src="assets/logo2-removebg-preview.png" alt="Daily arXiv AI Enhanced Logo" class="logo-image">
-            <span class="site-title">Daily arXiv AI Enhanced</span>
+            <img src="assets/logo2-removebg-preview.png" alt="Daily Paper AI Enhanced Logo" class="logo-image" data-site-logo-alt>
+            <span class="site-title" data-site-title>Daily Paper AI Enhanced</span>
         </a>
         <h1>Access Verification</h1>
-        <div class="subtitle">Please enter password to continue</div>
+        <div class="subtitle">Please enter your password to access the multi-source paper dashboard</div>
         <form id="loginForm">
             <div class="input-group">
                 <label for="password">Password</label>
@@ -171,7 +173,7 @@
             </div>
         </form>
         <div class="footer">
-            Powered by daily-arXiv-ai-enhanced
+            Powered by <span data-site-title>Daily Paper AI Enhanced</span>
         </div>
     </div>
 

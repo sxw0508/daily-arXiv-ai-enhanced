@@ -1,145 +1,168 @@
-# 🚀 daily-arXiv-ai-enhanced
+# Daily Paper AI Enhanced
 
-> [!CAUTION]
-> 若您所在法域对学术数据有审查要求，谨慎运行本代码；任何二次分发版本必须履行合规审查（包括但不限于原始论文合规性、AI合规性）义务，否则一切法律后果由下游自行承担。
+一个面向论文追踪的多源爬取与 AI 增强项目。当前版本支持从 `arXiv`、`bioRxiv`、`medRxiv`、`PubMed` 抓取论文，做关键词硬过滤、AI 摘要增强，并用纯静态前端展示结果。
 
-> [!CAUTION]
-> If your jurisdiction has censorship requirements for academic data, run this code with caution; any secondary distribution version must remove the entrance accessible to China and fulfill the content review obligations, otherwise all legal consequences will be borne by the downstream.
+当前仓库默认配置已经调整为更适合 `PD-L1` 靶点抗体方向的抓取与筛选。
 
+## 功能
 
-This innovative tool transforms how you stay updated with arXiv papers by combining automated crawling with AI-powered summarization.
+- 多源抓取：`arXiv`、`bioRxiv`、`medRxiv`、`PubMed`
+- 统一数据格式：不同来源归一化到同一套字段
+- 关键词过滤：支持 `keywords` 和 `keyword_groups`
+- AI 增强：对抓到的论文做标题、摘要、总结等增强
+- 静态前端：直接读取 `data/` 里的结果文件，无需后端服务
 
+## 项目结构
 
-## ✨ Key Features
+```text
+daily_arxiv/              Scrapy 爬虫与配置
+ai/                       AI 增强脚本
+data/                     爬取结果与增强结果
+assets/file-list.txt      前端读取的数据文件索引
+index.html                前端首页
+run.sh                    本地一键跑完整流程
+```
 
-🎯 **Zero Infrastructure Required**
-- Leverages GitHub Actions and Pages - no server needed
-- Completely free to deploy and use
+## 环境准备
 
-🤖 **Smart AI Summarization**
-- Daily paper crawling with DeepSeek-powered summaries
-- Cost-effective: Only ~0.2 CNY per day
+项目内统一使用 `uv`。
 
-💫 **Smart Reading Experience**
-- Personalized paper highlighting based on your interests
-- Cross-device compatibility (desktop & mobile)
-- Local preference storage for privacy
-- Flexible date range filtering
+```bash
+uv sync --locked
+```
 
-🧩 **SKILL System**
-- Plug-and-play skill modules for customizing paper filtering
+## 配置
 
-⚙️ **Easy Preference Export & Integration**
-- One-click copy in Settings to export your keywords and authors configuration
-- Seamlessly combine exported preferences with SKILL for reproducible and shareable setups
+项目有两层配置文件：
 
-👉 **[Try it now!](https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/)** - No installation required
+- [daily_arxiv/config.yaml](./daily_arxiv/config.yaml)：可提交的默认配置
+- `daily_arxiv/config.local.yaml`：本地私有配置，已加入 `.gitignore`
 
+配置优先级：
 
+```text
+环境变量 > config.local.yaml > config.yaml > 代码默认值
+```
 
-https://github.com/user-attachments/assets/b25712a4-fb8d-484f-863d-e8da6922f9d7
+建议把模型密钥放在 `daily_arxiv/config.local.yaml`：
 
+```yaml
+llm:
+  openai_api_key: your-api-key
+  openai_base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  model_name: qwen3.6-plus
+  language: Chinese
+```
 
+爬虫默认关键词、分组和时间窗在 [daily_arxiv/config.yaml](./daily_arxiv/config.yaml) 里：
 
+- `crawler.paper_sources`
+- `crawler.biorxiv_categories`
+- `crawler.medrxiv_categories`
+- `crawler.keywords`
+- `crawler.keyword_groups`
+- `crawler.rxiv_lookback_days`
+- `pubmed.query`
 
-# How to use
-This repo will daily crawl arXiv papers about **cs.CV, cs.GR, cs.CL and cs.AI**, and use **DeepSeek** to summarize the papers in **Chinese**.
-If you wish to crawl other arXiv categories, use other LLMs, or other languages, please follow the instructions.
-Otherwise, you can directly use this repo in https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/. Please star it if you like :)
+## 运行完整流程
 
-**Instructions:**
-1. Fork this repo to your own account and delete my own information in [by-me-a-coffee](./buy-me-a-coffee/README.md).
-2. Go to: your-own-repo -> Settings -> Secrets and variables -> Actions
-3. Go to Secrets. Secrets are encrypted and used for sensitive data
-4. Create two repository secrets named `OPENAI_API_KEY` and `OPENAI_BASE_URL`, and input corresponding values.
-5. [Optional] Set a password in `secrets.ACCESS_PASSWORD` if you do not wish others to access your page. (see https://github.com/dw-dengwei/daily-arXiv-ai-enhanced/pull/64)
-6. Go to Variables. Variables are shown as plain text and are used for non-sensitive data
-7. Create the following repository variables:
-   1. `CATEGORIES`: separate the categories with ",", such as "cs.CL, cs.CV"
-   2. `LANGUAGE`: such as "Chinese" or "English"
-   3. `MODEL_NAME`: such as "deepseek-chat"
-   4. `EMAIL`: your email for push to GitHub
-   5. `NAME`: your name for push to GitHub
-8. Go to your-own-repo -> Actions -> arXiv-daily-ai-enhanced
-9. You can manually click **Run workflow** to test if it works well (it may take about one hour). By default, this action will automatically run every day. You can modify it in `.github/workflows/run.yml`
-10. Set up GitHub pages: Go to your own repo -> Settings -> Pages. In `Build and deployment`, set `Source="Deploy from a branch"`, `Branch="main", "/(root)"`. Wait for a few minutes, go to https://\<username\>.github.io/daily-arXiv-ai-enhanced/. Please see this [issue](https://github.com/dw-dengwei/daily-arXiv-ai-enhanced/issues/14) for more precise instructions.
+一键跑完整链路：
 
-# Plans
-See https://github.com/users/dw-dengwei/projects/3
+```bash
+bash run.sh
+```
 
-# Contributors
-Thanks to the following special contributors for contributing code, discovering bugs, and sharing useful ideas for this project!!!
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top">
-        <a href="https://github.com/JianGuanTHU"><img src="https://avatars.githubusercontent.com/u/44895708?v=4" width="100px;" alt="JianGuanTHU"/><br /><sub><b>JianGuanTHU</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/Chi-hong22"><img src="https://avatars.githubusercontent.com/u/75403952?v=4" width="100px;" alt="Chi-hong22"/><br /><sub><b>Chi-hong22</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/chaozg"><img src="https://avatars.githubusercontent.com/u/69794131?v=4" width="100px;" alt="chaozg"/><br /><sub><b>chaozg</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/quantum-ctrl"><img src="https://avatars.githubusercontent.com/u/16505311?v=4" width="100px;" alt="quantum-ctrl"/><br /><sub><b>quantum-ctrl</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/Zhao2z"><img src="https://avatars.githubusercontent.com/u/141019403?v=4" width="100px;" alt="Zhao2z"/><br /><sub><b>Zhao2z</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/eclipse0922"><img src="https://avatars.githubusercontent.com/u/6214316?v=4" width="100px;" alt="eclipse0922"/><br /><sub><b>eclipse0922</b></sub></a><br />
-      </td>
-    </tr>
+这个脚本会做 4 件事：
 
+1. 按当前配置抓取论文
+2. 做去重检查
+3. 运行 AI 增强
+4. 生成前端使用的数据文件
 
-  </tbody>
-  <tbody>
-   <tr>
-      <td align="center" valign="top">
-        <a href="https://github.com/xuemian168"><img src="https://avatars.githubusercontent.com/u/38741078?v=4" width="100px;" alt="xuemian168"/><br /><sub><b>xuemian168</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/Lrrrr549"><img src="https://avatars.githubusercontent.com/u/71866027?v=4" width="100px;" alt="Lrrrr549"/><br /><sub><b>Lrrrr549</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/AinzRimuru"><img src="https://avatars.githubusercontent.com/u/59441476?v=4" width="100px;" alt="AinzRimuru"/><br /><sub><b>AinzRimuru</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/fengxueguiren"><img src="https://avatars.githubusercontent.com/u/153522370?v=4" width="100px;" alt="fengxueguiren"/><br /><sub><b>fengxueguiren</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://github.com/zerocpp"><img src="https://avatars.githubusercontent.com/u/2630297?v=4" width="100px;" alt="fengxueguiren"/><br /><sub><b>zerocpp</b></sub></a><br />
-      </td>
-   </tr>
-  </tbody>
-</table>
+生成物默认在 `data/` 下，例如：
 
-# Acknowledgement
-We sincerely thank the following individuals and organizations for their promotion and support!!!
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top">
-        <a href="https://x.com/GitHub_Daily/status/1930610556731318781"><img src="https://pbs.twimg.com/profile_images/1660876795347111937/EIo6fIr4_400x400.jpg" width="100px;" alt="Github_Daily"/><br /><sub><b>Github_Daily</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://x.com/aigclink/status/1930897858963853746"><img src="https://pbs.twimg.com/profile_images/1729450995850027008/gllXr6bh_400x400.jpg" width="100px;" alt="AIGCLINK"/><br /><sub><b>AIGCLINK</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://www.ruanyifeng.com/blog/2025/06/weekly-issue-353.html"><img src="https://avatars.githubusercontent.com/u/905434" width="100px;" alt="阮一峰的网络日志"/><br /><sub><b>阮一峰的网络日志 <br> 科技爱好者周刊 <br> （第 353 期）</b></sub></a><br />
-      </td>
-      <td align="center" valign="top">
-        <a href="https://hellogithub.com/periodical/volume/111"><img src="https://github.com/user-attachments/assets/eff6b6dd-0323-40c4-9db6-444a51bbc80a" width="100px;" alt="《HelloGitHub》第 111 期"/><br /><sub><b>《HelloGitHub》<br> 月刊第 111 期</b></sub></a><br />
-      </td>
-    </tr>
-  </tbody>
-</table>
+- `data/YYYY-MM-DD.jsonl`
+- `data/YYYY-MM-DD_AI_enhanced_Chinese.jsonl`
+- `data/YYYY-MM-DD.md`
 
+## 手动运行
 
-# Star history
+如果你想拆开执行，可以按下面跑。
 
-[![Stargazers over time](https://starchart.cc/dw-dengwei/daily-arXiv-ai-enhanced.svg?variant=adaptive)](https://starchart.cc/dw-dengwei/daily-arXiv-ai-enhanced)
+抓取：
 
-# Buy me a coffee
-[here](./buy-me-a-coffee/README.md)
+```bash
+cd daily_arxiv
+uv run scrapy crawl papers -O ../data/$(date -u +%F).jsonl
+```
+
+AI 增强：
+
+```bash
+cd ai
+uv run python enhance.py --data ../data/YYYY-MM-DD.jsonl
+```
+
+## 启动前端
+
+前端是纯静态页面，没有 Node 构建步骤，直接起一个静态文件服务即可。
+
+在仓库根目录运行：
+
+```bash
+uv run python -m http.server 8000
+```
+
+然后在浏览器打开：
+
+```text
+http://127.0.0.1:8000/
+```
+
+前端会读取：
+
+- `assets/file-list.txt`
+- `data/*.jsonl`
+
+如果你已经重新爬过并生成了新数据，刷新页面就能看到结果。
+
+## 前端说明
+
+- 首页、设置页、统计页都是静态页面
+- 前端设置只写入浏览器 `localStorage`
+- 前端设置不会修改爬虫配置、模型配置或 API key
+
+## GitHub Actions
+
+如果你想让仓库每天自动跑，可以直接用 [.github/workflows/run.yml](./.github/workflows/run.yml)。
+
+需要的核心配置有两类：
+
+- `Secrets`
+  - `OPENAI_API_KEY`
+  - `OPENAI_BASE_URL`
+  - 可选：`NCBI_API_KEY`
+- `Variables`
+  - `PAPER_SOURCES`
+  - `ARXIV_CATEGORIES`
+  - `BIORXIV_CATEGORIES`
+  - `MEDRXIV_CATEGORIES`
+  - `PUBMED_QUERY`
+  - `PUBMED_LABEL`
+  - `KEYWORDS`
+  - `KEYWORD_GROUPS`
+  - `RXIV_LOOKBACK_DAYS`
+  - `PUBMED_RETMAX`
+  - `PUBMED_DATE_TYPE`
+  - `LANGUAGE`
+  - `MODEL_NAME`
+
+## 当前默认方向
+
+当前默认配置针对 `PD-L1` 靶点抗体方向，主要来自：
+
+- `PubMed` 检索式约束
+- `bioRxiv/medRxiv` 的分类约束
+- `PD-L1 + 抗体名` 的关键词分组过滤
+
+如果你想切换到别的靶点，优先改 [daily_arxiv/config.yaml](./daily_arxiv/config.yaml)。

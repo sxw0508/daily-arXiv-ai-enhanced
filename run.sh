@@ -4,6 +4,26 @@
 # 主要工作流已迁移到 GitHub Actions (.github/workflows/run.yml)
 # Main workflow has been migrated to GitHub Actions (.github/workflows/run.yml)
 
+# 从配置文件读取默认值（环境变量优先）/ Load defaults from config file (env vars win)
+CONFIG_DEFAULTS=$(uv run python -c "import sys; sys.path.insert(0, 'daily_arxiv'); from daily_arxiv.source_utils import get_text_env; print('OPENAI_API_KEY=' + get_text_env('OPENAI_API_KEY', 'llm.openai_api_key', '')); print('OPENAI_BASE_URL=' + get_text_env('OPENAI_BASE_URL', 'llm.openai_base_url', 'https://api.openai.com/v1')); print('MODEL_NAME=' + get_text_env('MODEL_NAME', 'llm.model_name', 'gpt-4o-mini')); print('LANGUAGE=' + get_text_env('LANGUAGE', 'llm.language', 'Chinese'))")
+CONFIG_OPENAI_API_KEY=$(echo "$CONFIG_DEFAULTS" | sed -n 's/^OPENAI_API_KEY=//p')
+CONFIG_OPENAI_BASE_URL=$(echo "$CONFIG_DEFAULTS" | sed -n 's/^OPENAI_BASE_URL=//p')
+CONFIG_MODEL_NAME=$(echo "$CONFIG_DEFAULTS" | sed -n 's/^MODEL_NAME=//p')
+CONFIG_LANGUAGE=$(echo "$CONFIG_DEFAULTS" | sed -n 's/^LANGUAGE=//p')
+
+if [ -z "$OPENAI_API_KEY" ] && [ -n "$CONFIG_OPENAI_API_KEY" ]; then
+    export OPENAI_API_KEY="$CONFIG_OPENAI_API_KEY"
+fi
+if [ -z "$OPENAI_BASE_URL" ] && [ -n "$CONFIG_OPENAI_BASE_URL" ]; then
+    export OPENAI_BASE_URL="$CONFIG_OPENAI_BASE_URL"
+fi
+if [ -z "$MODEL_NAME" ] && [ -n "$CONFIG_MODEL_NAME" ]; then
+    export MODEL_NAME="$CONFIG_MODEL_NAME"
+fi
+if [ -z "$LANGUAGE" ] && [ -n "$CONFIG_LANGUAGE" ]; then
+    export LANGUAGE="$CONFIG_LANGUAGE"
+fi
+
 # 环境变量检查和提示 / Environment variables check and prompt
 echo "=== 本地调试环境检查 / Local Debug Environment Check ==="
 if [ -z "$TOKEN_GITHUB" ]; then
@@ -23,7 +43,12 @@ if [ -z "$OPENAI_API_KEY" ]; then
     echo "🔧 可选变量 / Optional variables:"
     echo "   export OPENAI_BASE_URL=\"https://api.openai.com/v1\"  # API基础URL / API base URL"
     echo "   export LANGUAGE=\"Chinese\"                           # 语言设置 / Language setting"
-    echo "   export CATEGORIES=\"cs.CV, cs.CL\"                    # 关注分类 / Categories of interest"
+    echo "   export PAPER_SOURCES=\"arxiv,biorxiv,medrxiv,pubmed\" # 数据源 / Enabled sources"
+    echo "   export ARXIV_CATEGORIES=\"cs.CV, cs.CL\"              # arXiv分类 / arXiv categories"
+    echo "   export BIORXIV_CATEGORIES=\"bioinformatics\"          # bioRxiv分类 / bioRxiv categories"
+    echo "   export MEDRXIV_CATEGORIES=\"infectious diseases\"     # medRxiv分类 / medRxiv categories"
+    echo "   export PUBMED_QUERY=\"cancer AND immunotherapy\"      # PubMed检索式 / PubMed query"
+    echo "   export KEYWORDS=\"target discovery,protein-ligand\"   # 硬过滤关键词 / Hard filter keywords"
     echo "   export MODEL_NAME=\"gpt-4o-mini\"                     # 模型名称 / Model name"
     echo ""
     echo "💡 设置后重新运行此脚本即可进行完整测试 / After setting, rerun this script for complete testing"
@@ -41,13 +66,29 @@ else
     
     # 设置默认值 / Set default values
     export LANGUAGE="${LANGUAGE:-Chinese}"
-    export CATEGORIES="${CATEGORIES:-cs.CV, cs.CL}"
+    export PAPER_SOURCES="${PAPER_SOURCES:-arxiv}"
+    export ARXIV_CATEGORIES="${ARXIV_CATEGORIES:-${CATEGORIES:-cs.CV, cs.CL}}"
+    export CATEGORIES="${CATEGORIES:-$ARXIV_CATEGORIES}"
+    export BIORXIV_CATEGORIES="${BIORXIV_CATEGORIES:-}"
+    export MEDRXIV_CATEGORIES="${MEDRXIV_CATEGORIES:-}"
+    export PUBMED_QUERY="${PUBMED_QUERY:-}"
+    export PUBMED_LABEL="${PUBMED_LABEL:-PubMed}"
+    export KEYWORDS="${KEYWORDS:-}"
+    export RXIV_LOOKBACK_DAYS="${RXIV_LOOKBACK_DAYS:-2}"
+    export PUBMED_RETMAX="${PUBMED_RETMAX:-200}"
+    export PUBMED_DATE_TYPE="${PUBMED_DATE_TYPE:-edat}"
     export MODEL_NAME="${MODEL_NAME:-gpt-4o-mini}"
     export OPENAI_BASE_URL="${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+    export OPENAI_API_BASE="${OPENAI_API_BASE:-$OPENAI_BASE_URL}"
     
     echo "🔧 当前配置 / Current configuration:"
     echo "   LANGUAGE: $LANGUAGE"
-    echo "   CATEGORIES: $CATEGORIES"
+    echo "   PAPER_SOURCES: $PAPER_SOURCES"
+    echo "   ARXIV_CATEGORIES: $ARXIV_CATEGORIES"
+    echo "   BIORXIV_CATEGORIES: $BIORXIV_CATEGORIES"
+    echo "   MEDRXIV_CATEGORIES: $MEDRXIV_CATEGORIES"
+    echo "   PUBMED_QUERY: $PUBMED_QUERY"
+    echo "   KEYWORDS: $KEYWORDS"
     echo "   MODEL_NAME: $MODEL_NAME"
     echo "   OPENAI_BASE_URL: $OPENAI_BASE_URL"
 fi
@@ -73,7 +114,7 @@ else
 fi
 
 cd daily_arxiv
-scrapy crawl arxiv -o ../data/${today}.jsonl
+uv run scrapy crawl papers -o ../data/${today}.jsonl
 
 if [ ! -f "../data/${today}.jsonl" ]; then
     echo "爬取失败，未生成数据文件 / Crawling failed, no data file generated"
@@ -82,7 +123,7 @@ fi
 
 # 第二步：检查去重 / Step 2: Check duplicates  
 echo "步骤2：执行去重检查... / Step 2: Performing intelligent deduplication check..."
-python daily_arxiv/check_stats.py
+uv run python daily_arxiv/check_stats.py
 dedup_exit_code=$?
 
 case $dedup_exit_code in
@@ -109,7 +150,7 @@ cd ..
 if [ "$PARTIAL_MODE" = "false" ]; then
     echo "步骤3：AI增强处理... / Step 3: AI enhancement processing..."
     cd ai
-    python enhance.py --data ../data/${today}.jsonl
+    uv run python enhance.py --data ../data/${today}.jsonl
     
     if [ $? -ne 0 ]; then
         echo "❌ AI处理失败 / AI processing failed"
@@ -127,7 +168,7 @@ cd to_md
 
 if [ "$PARTIAL_MODE" = "false" ] && [ -f "../data/${today}_AI_enhanced_${LANGUAGE}.jsonl" ]; then
     echo "📄 使用AI增强后的数据进行转换... / Using AI enhanced data for conversion..."
-    python convert.py --data ../data/${today}_AI_enhanced_${LANGUAGE}.jsonl
+    uv run python convert.py --data ../data/${today}_AI_enhanced_${LANGUAGE}.jsonl
     
     if [ $? -ne 0 ]; then
         echo "❌ Markdown转换失败 / Markdown conversion failed"

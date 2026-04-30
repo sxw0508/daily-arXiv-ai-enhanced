@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', checkScreenSize);
 
   initEventListeners();
-  fetchGitHubStats();
   
   fetchAvailableDates().then(() => {
     if (availableDates.length > 0) {
@@ -36,22 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-
-async function fetchGitHubStats() {
-  try {
-    const response = await fetch('https://api.github.com/repos/dw-dengwei/daily-arXiv-ai-enhanced');
-    const data = await response.json();
-    const starCount = data.stargazers_count;
-    const forkCount = data.forks_count;
-    
-    document.getElementById('starCount').textContent = starCount;
-    document.getElementById('forkCount').textContent = forkCount;
-  } catch (error) {
-    console.error('获取GitHub统计数据失败:', error);
-    document.getElementById('starCount').textContent = '?';
-    document.getElementById('forkCount').textContent = '?';
-  }
-}
 
 function toggleDatePicker() {
   const datePicker = document.getElementById('datePickerModal');
@@ -716,6 +699,26 @@ async function loadPapersByDateRange(startDate, endDate) {
 
 function parseJsonlData(jsonlText, date) {
   const result = {};
+
+  function inferSourceLabel(paper) {
+    if (paper.source_label) return paper.source_label;
+    if (paper.source === 'arxiv') return 'arXiv';
+    if (paper.source === 'biorxiv') return 'bioRxiv';
+    if (paper.source === 'medrxiv') return 'medRxiv';
+    if (paper.source === 'pubmed') return 'PubMed';
+
+    const absUrl = paper.abs || paper.html || paper.pdf || '';
+    if (absUrl.includes('arxiv.org')) return 'arXiv';
+    if (absUrl.includes('biorxiv.org')) return 'bioRxiv';
+    if (absUrl.includes('medrxiv.org')) return 'medRxiv';
+    if (absUrl.includes('pubmed.ncbi.nlm.nih.gov')) return 'PubMed';
+    return 'Unknown';
+  }
+
+  function getPrimaryPaperUrl(paper) {
+    const sourceId = paper.source_id || (paper.id && paper.id.startsWith('arxiv:') ? paper.id.slice(6) : paper.id);
+    return paper.abs || paper.html || paper.pdf || `https://arxiv.org/abs/${sourceId}`;
+  }
   
   const lines = jsonlText.trim().split('\n');
   
@@ -724,10 +727,14 @@ function parseJsonlData(jsonlText, date) {
       const paper = JSON.parse(line);
       
       if (!paper.categories) {
-        return;
+        paper.categories = [inferSourceLabel(paper)];
       }
       
       let allCategories = Array.isArray(paper.categories) ? paper.categories : [paper.categories];
+      allCategories = allCategories.filter(category => !!category);
+      if (allCategories.length === 0) {
+        allCategories = [inferSourceLabel(paper)];
+      }
       
       const primaryCategory = allCategories[0];
       
@@ -739,13 +746,14 @@ function parseJsonlData(jsonlText, date) {
       
       result[primaryCategory].push({
         title: paper.title,
-        url: paper.abs || paper.pdf || `https://arxiv.org/abs/${paper.id}`,
+        url: getPrimaryPaperUrl(paper),
         authors: Array.isArray(paper.authors) ? paper.authors.join(', ') : paper.authors,
         category: allCategories,
         summary: summary,
         details: paper.summary || '',
-        date: date,
+        date: paper.posted_date || paper.published || date,
         id: paper.id,
+        sourceLabel: inferSourceLabel(paper),
         motivation: paper.AI && paper.AI.motivation ? paper.AI.motivation : '',
         method: paper.AI && paper.AI.method ? paper.AI.method : '',
         result: paper.AI && paper.AI.result ? paper.AI.result : '',
@@ -789,6 +797,7 @@ function showRelatedPapers(keyword) {
             <div class="paper-number">${index + 1}</div>
             <a href="${paper.url}" target="_blank" class="paper-title">${paper.title}</a>
             <div class="paper-authors">${paper.authors}</div>
+            <div class="paper-authors">${paper.sourceLabel || 'Unknown'}</div>
             <div class="paper-categories">
                 ${paper.category.map(cat => `<span class="category-tag">${cat}</span>`).join('')}
             </div>

@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 ai/.env
+daily_arxiv/config.local.yaml
 test/*
 .idea/
 .cursorrules
