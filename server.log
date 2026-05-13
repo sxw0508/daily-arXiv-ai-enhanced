@@ -1,0 +1,197 @@
+nohup: ignoring input
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET / HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /css/styles.css HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /js/data-config.js HTTP/1.1" 200 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /js/auth.js HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /js/auth-config.js HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /js/site-config.js HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /js/app.js?v=1.0.1 HTTP/1.1" 304 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /assets/file-list.txt HTTP/1.1" 200 -
+182.136.178.187 - - [30/Apr/2026 13:56:26] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET / HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /css/styles.css HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /js/auth.js HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /js/data-config.js HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /js/site-config.js HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /js/auth-config.js HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:06] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:07] "GET /assets/file-list.txt HTTP/1.1" 200 -
+111.200.195.130 - - [30/Apr/2026 15:40:07] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET / HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /css/styles.css HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /js/site-config.js HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /js/auth.js HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /js/auth-config.js HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /js/data-config.js HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /assets/file-list.txt HTTP/1.1" 200 -
+121.224.93.60 - - [30/Apr/2026 15:42:55] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+121.237.36.31 - - [30/Apr/2026 15:47:07] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [30/Apr/2026 15:47:30] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [30/Apr/2026 15:48:28] code 404, message File not found
+121.237.36.31 - - [30/Apr/2026 15:48:28] "GET /favicon.ico HTTP/1.1" 404 -
+121.237.36.31 - - [30/Apr/2026 15:48:55] "GET / HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET / HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /css/styles.css HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /js/site-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /js/auth-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /js/data-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /js/auth.js HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:49] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:50] "GET /assets/file-list.txt HTTP/1.1" 200 -
+121.224.93.34 - - [30/Apr/2026 16:43:50] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+207.46.13.229 - - [30/Apr/2026 22:20:58] code 404, message File not found
+207.46.13.229 - - [30/Apr/2026 22:20:58] "GET /robots.txt HTTP/1.1" 404 -
+52.167.144.137 - - [30/Apr/2026 22:21:02] "GET / HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:04] "GET /js/data-config.js HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:04] "GET /js/auth-config.js HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:04] "GET /js/site-config.js HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:04] "GET /css/styles.css HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:04] "GET /js/auth.js HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:05] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:06] "GET /assets/file-list.txt HTTP/1.1" 200 -
+65.55.210.28 - - [30/Apr/2026 22:21:08] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+40.77.167.108 - - [02/May/2026 23:54:14] code 404, message File not found
+40.77.167.108 - - [02/May/2026 23:54:14] "GET /robots.txt HTTP/1.1" 404 -
+40.77.167.18 - - [02/May/2026 23:54:25] "GET / HTTP/1.1" 200 -
+157.55.39.197 - - [04/May/2026 01:35:08] "GET / HTTP/1.1" 200 -
+157.55.39.59 - - [04/May/2026 07:45:47] "GET /index.html HTTP/1.1" 200 -
+157.55.39.63 - - [04/May/2026 08:37:42] "GET / HTTP/1.1" 200 -
+40.77.167.101 - - [05/May/2026 04:05:34] code 404, message File not found
+40.77.167.101 - - [05/May/2026 04:05:34] "GET /robots.txt HTTP/1.1" 404 -
+207.46.13.128 - - [05/May/2026 04:05:45] "GET / HTTP/1.1" 200 -
+52.167.144.172 - - [05/May/2026 05:29:49] "GET /settings.html HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:24:45] code 404, message File not found
+121.224.93.60 - - [06/May/2026 11:24:45] "GET /data/2026-04-28_AI_enhanced_Chinese.jsonl HTTP/1.1" 404 -
+121.224.93.60 - - [06/May/2026 11:24:48] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /statistic.html HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /css/styles.css HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /js/auth-config.js HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /js/site-config.js HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /css/statistic.css HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /js/data-config.js HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /js/auth.js HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /js/statistic.js HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:24:49] "GET /assets/file-list.txt HTTP/1.1" 304 -
+121.224.93.60 - - [06/May/2026 11:25:00] "GET /index.html HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:25:00] "GET /js/app.js?v=1.0.1 HTTP/1.1" 304 -
+121.237.36.31 - - [06/May/2026 11:30:16] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [06/May/2026 11:34:11] "GET / HTTP/1.1" 200 -
+121.237.36.28 - - [06/May/2026 11:37:03] "GET / HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:38:51] "GET /settings.html HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:38:51] "GET /css/settings.css HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:38:51] "GET /js/settings.js HTTP/1.1" 200 -
+121.224.93.60 - - [06/May/2026 11:46:07] "GET /index.html HTTP/1.1" 304 -
+121.237.36.31 - - [06/May/2026 11:47:28] code 404, message File not found
+121.237.36.31 - - [06/May/2026 11:47:28] "GET /favicon.ico HTTP/1.1" 404 -
+40.77.167.101 - - [07/May/2026 18:49:08] code 404, message File not found
+40.77.167.101 - - [07/May/2026 18:49:08] "GET /robots.txt HTTP/1.1" 404 -
+157.55.39.49 - - [07/May/2026 18:49:12] "GET /index.html HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('91.215.85.106', 63167)
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/http/server.py", line 1311, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/http/server.py", line 404, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/envs/pharmacy_sxw/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+40.77.167.101 - - [10/May/2026 00:24:21] code 404, message File not found
+40.77.167.101 - - [10/May/2026 00:24:21] "GET /robots.txt HTTP/1.1" 404 -
+52.167.144.187 - - [10/May/2026 00:24:23] "GET /settings.html HTTP/1.1" 200 -
+52.167.144.181 - - [10/May/2026 05:14:17] "GET /index.html HTTP/1.1" 200 -
+40.77.167.26 - - [11/May/2026 05:25:28] "GET /settings.html HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET / HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /css/styles.css HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /js/auth-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /js/auth.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /js/data-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /js/site-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 304 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /assets/file-list.txt HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 09:37:21] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+121.237.36.28 - - [11/May/2026 09:42:01] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [11/May/2026 09:42:57] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [11/May/2026 09:46:33] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [11/May/2026 09:47:39] code 404, message File not found
+121.237.36.31 - - [11/May/2026 09:47:39] "GET /favicon.ico HTTP/1.1" 404 -
+121.237.36.27 - - [11/May/2026 10:48:28] "GET / HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET / HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /css/styles.css HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /js/auth-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /js/data-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /js/auth.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /js/site-config.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /assets/file-list.txt HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 15:52:13] "GET /data/2026-04-29_AI_enhanced_Chinese.jsonl HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:38:37] "GET /index.html HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:39:26] code 404, message File not found
+121.224.93.34 - - [11/May/2026 16:39:26] "GET /data/2026-04-21_AI_enhanced_Chinese.jsonl HTTP/1.1" 404 -
+121.224.93.34 - - [11/May/2026 16:39:34] "GET /statistic.html HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:39:34] "GET /css/statistic.css HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:39:34] "GET /js/statistic.js HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:58:46] "GET /settings.html HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:58:46] "GET /css/settings.css HTTP/1.1" 200 -
+121.224.93.34 - - [11/May/2026 16:58:46] "GET /js/settings.js HTTP/1.1" 200 -
+40.77.167.101 - - [11/May/2026 22:10:51] code 404, message File not found
+40.77.167.101 - - [11/May/2026 22:10:51] "GET /robots.txt HTTP/1.1" 404 -
+40.77.167.15 - - [11/May/2026 22:11:04] "GET / HTTP/1.1" 200 -
+40.77.167.230 - - [11/May/2026 22:11:15] "GET /js/data-config.js HTTP/1.1" 200 -
+40.77.167.54 - - [11/May/2026 22:11:19] "GET /css/styles.css HTTP/1.1" 200 -
+40.77.167.54 - - [11/May/2026 22:11:20] "GET /js/site-config.js HTTP/1.1" 200 -
+40.77.167.54 - - [11/May/2026 22:11:21] "GET /js/app.js?v=1.0.1 HTTP/1.1" 200 -
+40.77.167.15 - - [11/May/2026 22:11:24] "GET /js/auth-config.js HTTP/1.1" 200 -
+40.77.167.15 - - [11/May/2026 22:11:24] "GET /js/auth.js HTTP/1.1" 200 -
+40.77.179.36 - - [11/May/2026 22:27:16] "GET /assets/file-list.txt HTTP/1.1" 200 -
+176.65.149.64 - - [12/May/2026 18:07:51] code 400, message Bad request syntax ('SSH-2.0-OpenSSH')
+176.65.149.64 - - [12/May/2026 18:07:51] "SSH-2.0-OpenSSH" 400 -
+40.77.167.101 - - [12/May/2026 20:40:13] code 404, message File not found
+40.77.167.101 - - [12/May/2026 20:40:13] "GET /robots.txt HTTP/1.1" 404 -
+40.77.167.58 - - [12/May/2026 20:40:18] "GET /settings.html HTTP/1.1" 200 -
+88.210.63.16 - - [13/May/2026 13:30:56] code 400, message Bad HTTP/0.9 request type ('\\x03\\x00\\x00/*à\\x00\\x00\\x00\\x00\\x00Cookie:')
+88.210.63.16 - - [13/May/2026 13:30:56] "\x03\x00\x00/*à\x00\x00\x00\x00\x00Cookie: mstshash=Administr" 400 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET / HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /css/styles.css HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /js/site-config.js HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /js/auth-config.js?v=auth-1 HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /js/data-config.js HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /js/auth.js?v=auth-1 HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /js/app.js?v=1.0.4 HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:47] "GET /assets/logo2-removebg-preview.png HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /login.html?redirect=index.html HTTP/1.1" 200 -
+121.224.93.60 - - [13/May/2026 14:28:48] code 404, message File not found
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+121.224.93.60 - - [13/May/2026 14:28:48] code 404, message File not found
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+121.224.93.60 - - [13/May/2026 14:28:48] code 404, message File not found
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /favicon.ico HTTP/1.1" 404 -
+121.224.93.60 - - [13/May/2026 14:28:48] code 404, message File not found
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 -
+121.224.93.60 - - [13/May/2026 14:28:48] code 404, message File not found
+121.224.93.60 - - [13/May/2026 14:28:48] "GET /apple-touch-icon.png HTTP/1.1" 404 -
+121.237.36.31 - - [13/May/2026 14:30:51] "GET / HTTP/1.1" 200 -
+121.237.36.31 - - [13/May/2026 14:33:25] code 404, message File not found
+121.237.36.31 - - [13/May/2026 14:33:25] "GET /favicon.ico HTTP/1.1" 404 -
+121.237.36.31 - - [13/May/2026 14:34:24] "GET / HTTP/1.1" 200 -
+121.237.36.29 - - [13/May/2026 14:36:00] "GET / HTTP/1.1" 200 -
+121.237.36.27 - - [13/May/2026 14:36:44] "GET / HTTP/1.1" 200 -

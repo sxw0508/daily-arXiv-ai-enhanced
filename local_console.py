@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import subprocess
 import threading
 from collections import deque
@@ -742,9 +744,26 @@ class ControlRequestHandler(SimpleHTTPRequestHandler):
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Serve static UI and /api/control/* for Daily arXiv.")
+    parser.add_argument(
+        "--host",
+        default=os.environ.get("DAILY_ARXIV_CONSOLE_HOST", "127.0.0.1"),
+        help="Bind address (default 127.0.0.1; use 0.0.0.0 for LAN/public). Env: DAILY_ARXIV_CONSOLE_HOST.",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.environ.get("DAILY_ARXIV_CONSOLE_PORT", "8000")),
+        help="Listen port (default 8000). Env: DAILY_ARXIV_CONSOLE_PORT.",
+    )
+    args = parser.parse_args()
+
     refresh_file_list()
-    server = ThreadingHTTPServer(("127.0.0.1", 8000), ControlRequestHandler)
-    print("Local console running at http://127.0.0.1:8000")
+    server = ThreadingHTTPServer((args.host, args.port), ControlRequestHandler)
+    display_host = "127.0.0.1" if args.host in ("0.0.0.0", "::") else args.host
+    print(f"Local console running at http://{display_host}:{args.port}")
+    if args.host in ("0.0.0.0", "::"):
+        print("Listening on all interfaces; protect /api/control/* if exposed beyond localhost.")
     server.serve_forever()
 
 

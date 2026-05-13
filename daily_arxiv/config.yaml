@@ -14,59 +14,53 @@ crawler:
   - oncology
   - immunology
   keywords:
-  - CEACAM5
-  - CD66e
-  - Carcinoembryonic Antigen-Related Cell Adhesion Molecule 5
-  - CGM1
-  - NCA-95
-  - BGP
-  - antibody
+  - EGFR
+  - ERBB1
+  - HER1
+  - Epidermal Growth Factor Receptor
   - monoclonal antibody
+  - mAb
   - bispecific antibody
-  - ADC
+  - bsAb
   - antibody-drug conjugate
+  - ADC
   - nanobody
-  - scFv
-  - Fab
+  - VHH
   - Fc engineering
   - affinity maturation
   - epitope mapping
   - internalization
-  - therapeutic
-  - clinical trial
+  - resistance
   - efficacy
   - safety
-  - resistance
   - biomarker
+  - antibody
   - therapeutic antibody
   - antibody engineering
   - humanized antibody
   - clinical efficacy
   keyword_groups:
-  - - CEACAM5
-    - CD66e
-    - Carcinoembryonic Antigen-Related Cell Adhesion Molecule 5
-    - CGM1
-    - NCA-95
-    - BGP
-  - - antibody
-    - monoclonal antibody
+  - - EGFR
+    - ERBB1
+    - HER1
+    - Epidermal Growth Factor Receptor
+  - - monoclonal antibody
+    - mAb
     - bispecific antibody
-    - ADC
+    - bsAb
     - antibody-drug conjugate
+    - ADC
     - nanobody
-    - scFv
-    - Fab
+    - VHH
     - Fc engineering
     - affinity maturation
     - epitope mapping
     - internalization
-    - therapeutic
-    - clinical trial
+    - resistance
     - efficacy
     - safety
-    - resistance
     - biomarker
+    - antibody
     - therapeutic antibody
     - antibody engineering
     - humanized antibody
@@ -80,14 +74,14 @@ crawler:
     - nanobody
   rxiv_lookback_days: 60
 pubmed:
-  query: (CEACAM5[Title/Abstract] OR CD66e[Title/Abstract] OR "Carcinoembryonic Antigen-Related
-    Cell Adhesion Molecule 5"[Title/Abstract] OR CGM1[Title/Abstract] OR "NCA-95"[Title/Abstract]
-    OR BGP[Title/Abstract]) AND (antibody[Title/Abstract] OR "monoclonal antibody"[Title/Abstract]
-    OR mAb[Title/Abstract] OR bispecific[Title/Abstract] OR ADC[Title/Abstract] OR
-    "antibody-drug conjugate"[Title/Abstract] OR nanobody[Title/Abstract] OR scFv[Title/Abstract]
-    OR Fab[Title/Abstract] OR "Fc engineering"[Title/Abstract] OR "affinity maturation"[Title/Abstract]
-    OR epitope[Title/Abstract] OR internalization[Title/Abstract])
-  label: CEACAM5 Antibody Therapeutics
+  query: ("EGFR"[Title/Abstract] OR "ERBB1"[Title/Abstract] OR "HER1"[Title/Abstract]
+    OR "Epidermal Growth Factor Receptor"[Title/Abstract]) AND ("monoclonal antibody"[Title/Abstract]
+    OR "mAb"[Title/Abstract] OR "bispecific antibody"[Title/Abstract] OR "bsAb"[Title/Abstract]
+    OR "antibody-drug conjugate"[Title/Abstract] OR "ADC"[Title/Abstract] OR "nanobody"[Title/Abstract]
+    OR "VHH"[Title/Abstract] OR "Fc engineering"[Title/Abstract] OR "affinity maturation"[Title/Abstract]
+    OR "epitope mapping"[Title/Abstract] OR "internalization"[Title/Abstract] OR "resistance"[Title/Abstract]
+    OR "efficacy"[Title/Abstract] OR "safety"[Title/Abstract] OR "biomarker"[Title/Abstract])
+  label: EGFR Antibody Therapeutics
   retmax: 200
   date_type: pdat
 llm:

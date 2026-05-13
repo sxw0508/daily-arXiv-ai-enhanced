@@ -147,7 +147,7 @@ uv run python -m http.server 8000
 5. 爬取与 AI 可能耗时很长，为反代设置足够的 **`proxy_read_timeout`** / **`proxy_send_timeout`**，避免网关 504。
 6. **安全**：`/api/control/*` **没有内置登录鉴权**；`login.html` 等页面验证不能代替服务端保护。公网务必配合 **VPN、IP 白名单、Nginx 基本认证** 等之一，避免任意人触发爬取或改写 `config.yaml`。
 
-**一键脚本（Ubuntu / Debian）**：在仓库中查看 [scripts/deploy_one_click.sh](./scripts/deploy_one_click.sh)（需 `sudo`，用法与可选环境变量见脚本内注释）。
+**一键脚本（本机直挂端口，systemd 管理）**：在仓库中查看 [scripts/deploy_local_console.sh](./scripts/deploy_local_console.sh)（需 `sudo`；不装 Nginx，由 `local_console.py` 自身监听 `LISTEN_HOST:LISTEN_PORT`）。前端登录密码可通过 `FRONTEND_PASSWORD` 环境变量设置，脚本会把其 SHA-256 写入 `js/auth-config.js`。
 
 ## 前端说明
 
