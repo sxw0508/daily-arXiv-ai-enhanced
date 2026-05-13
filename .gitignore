@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+.env
 ai/.env
 daily_arxiv/config.local.yaml
 test/*

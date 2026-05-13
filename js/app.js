@@ -18,6 +18,13 @@ let currentFilteredPapers = []; // 当前过滤后的论文列表
 let textSearchQuery = ''; // 实时文本搜索查询
 let previousActiveKeywords = null; // 文本搜索激活时，暂存之前的关键词激活集合
 let previousActiveAuthors = null; // 文本搜索激活时，暂存之前的作者激活集合
+let currentRangeStart = '';
+let currentRangeEnd = '';
+let controlApiAvailable = false;
+let controlStateCache = null;
+let controlPollTimer = null;
+let latestEnhancedOutputSignature = '';
+let latestSuccessfulControlRun = '';
 
 // 加载用户的关键词设置
 function loadUserKeywords() {
@@ -241,7 +248,7 @@ function getUrlKeywords() {
 
 // 检查是否以JSON模式运行
 function isJsonMode() {
-  return getUrlCategory() !== null || getJsonParam() !== null || getUrlAuthor() !== null || getUrlKeywords() !== null;
+  return getJsonParam() !== null;
 }
 
 // 输出JSON格式的论文数据
@@ -408,8 +415,583 @@ function matchPapersByKeywordsOrAuthor(papers, keywords, author) {
   });
 }
 
+function updateCrawlDateDisplay(label, caption = 'Crawl batch') {
+  const dateElement = document.getElementById('currentDate');
+  const captionElement = document.getElementById('currentDateCaption');
+
+  if (dateElement) {
+    dateElement.textContent = label;
+  }
+  if (captionElement) {
+    captionElement.textContent = caption;
+  }
+}
+
+function splitMultilineTerms(value) {
+  return String(value || '')
+    .split('\n')
+    .map(term => term.trim())
+    .filter(Boolean);
+}
+
+function dedupeTerms(terms) {
+  const seen = new Set();
+  return terms.filter(term => {
+    const key = term.toLowerCase();
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function quotePubmedTerm(term) {
+  return `"${String(term).replaceAll('"', '\\"')}"[Title/Abstract]`;
+}
+
+function buildAutoPubmedQuery(coreTerms, supportTerms) {
+  const core = dedupeTerms(coreTerms).map(quotePubmedTerm);
+  const support = dedupeTerms(supportTerms).map(quotePubmedTerm);
+
+  if (core.length > 0 && support.length > 0) {
+    return `((${core.join(' OR ')}) AND (${support.join(' OR ')}))`;
+  }
+  if (core.length > 0) {
+    return `(${core.join(' OR ')})`;
+  }
+  if (support.length > 0) {
+    return `(${support.join(' OR ')})`;
+  }
+  return '';
+}
+
+const SOURCE_OPTIONS = [
+  { value: 'pubmed', label: 'PubMed' },
+  { value: 'biorxiv', label: 'bioRxiv' },
+  { value: 'medrxiv', label: 'medRxiv' },
+  { value: 'arxiv', label: 'arXiv' },
+];
+
+const DEFAULT_RESEARCH_FOCUS = 'antibody_therapeutics';
+
+const RESEARCH_FOCUS_OPTIONS = [
+  { value: 'antibody_therapeutics', label: 'Antibody Therapeutics' },
+  { value: 'adc', label: 'ADC' },
+  { value: 'bispecific_antibody', label: 'Bispecific Antibody' },
+  { value: 'general_target_biology', label: 'General Target Biology' },
+];
+
+function normalizeControlConfig(config) {
+  return {
+    paper_sources: config?.crawler?.paper_sources || '',
+    research_focus: config?.crawler?.research_focus || DEFAULT_RESEARCH_FOCUS,
+    arxiv_categories: config?.crawler?.arxiv_categories || '',
+    biorxiv_categories: config?.crawler?.biorxiv_categories || '',
+    medrxiv_categories: config?.crawler?.medrxiv_categories || '',
+    rxiv_lookback_days: config?.crawler?.rxiv_lookback_days ?? 30,
+    keywords_text: config?.crawler?.keywords_text || '',
+    keyword_groups_text: config?.crawler?.keyword_groups_text || '',
+    pubmed_query: config?.pubmed?.query || '',
+    pubmed_label: config?.pubmed?.label || '',
+    pubmed_retmax: config?.pubmed?.retmax ?? 200,
+    pubmed_date_type: config?.pubmed?.date_type || 'pdat',
+    llm_model_name: config?.llm?.model_name || '',
+    llm_language: config?.llm?.language || '',
+    llm_openai_base_url: config?.llm?.openai_base_url || '',
+  };
+}
+
+function updateStatusPill(element, status, label) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.remove('running', 'success', 'error', 'offline');
+  if (status) {
+    element.classList.add(status);
+  }
+  element.textContent = label;
+}
+
+function formatControlTimestamp(value) {
+  if (!value) {
+    return '';
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function getJobStateCopy(job) {
+  if (!controlApiAvailable) {
+    return {
+      status: 'offline',
+      label: 'Offline',
+      detail: '本地控制 API 不可用。请使用 `uv run python local_console.py` 启动本地控制台。',
+    };
+  }
+
+  if (job?.running) {
+    return {
+      status: 'running',
+      label: 'Running',
+      detail: `${job.action === 'full' ? '自动化分析' : '爬虫任务'} 正在运行，开始于 ${formatControlTimestamp(job.started_at) || '刚刚'}。`,
+    };
+  }
+
+  if (job && typeof job.exit_code === 'number') {
+    if (job.exit_code === 0) {
+      return {
+        status: 'success',
+        label: 'Ready',
+        detail: `${job.action === 'full' ? '完整分析' : '爬虫任务'} 已完成，结束于 ${formatControlTimestamp(job.finished_at) || '刚刚'}。`,
+      };
+    }
+    return {
+      status: 'error',
+      label: 'Failed',
+      detail: `${job.action === 'full' ? '完整分析' : '爬虫任务'} 失败，退出码 ${job.exit_code}。请先检查控制台日志。`,
+    };
+  }
+
+  return {
+    status: '',
+    label: 'Idle',
+    detail: '输入靶点和疾病后，点击 `Generate With AI` 生成抓取方案。',
+  };
+}
+
+function getSelectedTargetSources() {
+  return SOURCE_OPTIONS
+    .map(option => option.value)
+    .filter(value => {
+      const checkbox = document.querySelector(`#studioSourceDropdown input[value="${value}"]`);
+      return Boolean(checkbox?.checked);
+    });
+}
+
+function updateSourceSummary() {
+  const summary = document.getElementById('studioSourceSummary');
+  if (!summary) {
+    return;
+  }
+
+  const selected = getSelectedTargetSources();
+  if (selected.length === 0) {
+    summary.textContent = 'Select sources';
+    return;
+  }
+
+  summary.textContent = SOURCE_OPTIONS
+    .filter(option => selected.includes(option.value))
+    .map(option => option.label)
+    .join(', ');
+}
+
+function setSelectedTargetSources(values) {
+  const normalized = Array.isArray(values)
+    ? values
+    : String(values || '').split(',').map(value => value.trim()).filter(Boolean);
+
+  document.querySelectorAll('#studioSourceDropdown input[type="checkbox"]').forEach(checkbox => {
+    checkbox.checked = normalized.includes(checkbox.value);
+  });
+
+  updateSourceSummary();
+}
+
+function setTargetStudioStatus(message) {
+  const node = document.getElementById('studioStatusCopy');
+  if (node) {
+    node.textContent = message;
+  }
+}
+
+function getSelectedResearchFocus() {
+  const value = document.getElementById('studioResearchFocus')?.value || DEFAULT_RESEARCH_FOCUS;
+  return RESEARCH_FOCUS_OPTIONS.some(option => option.value === value)
+    ? value
+    : DEFAULT_RESEARCH_FOCUS;
+}
+
+function populateTargetStudio(config) {
+  const categoryLabel = document.getElementById('studioCategoryLabel');
+  const coreTerms = document.getElementById('studioCoreTerms');
+  const supportTerms = document.getElementById('studioSupportTerms');
+  const pubmedQuery = document.getElementById('studioPubmedQuery');
+  const lookbackDays = document.getElementById('studioLookbackDays');
+  const researchFocus = document.getElementById('studioResearchFocus');
+
+  const groups = String(config.keyword_groups_text || '')
+    .split('\n')
+    .map(group => group.split('|').map(term => term.trim()).filter(Boolean))
+    .filter(group => group.length > 0);
+
+  if (categoryLabel && !categoryLabel.value.trim()) {
+    categoryLabel.value = config.pubmed_label || '';
+  }
+  if (!getSelectedTargetSources().length) {
+    setSelectedTargetSources(config.paper_sources || 'pubmed');
+  }
+  if (researchFocus) {
+    const nextFocus = config.research_focus || DEFAULT_RESEARCH_FOCUS;
+    researchFocus.value = RESEARCH_FOCUS_OPTIONS.some(option => option.value === nextFocus)
+      ? nextFocus
+      : DEFAULT_RESEARCH_FOCUS;
+  }
+  if (coreTerms && !coreTerms.value.trim()) {
+    coreTerms.value = (groups[0] || []).join('\n');
+  }
+  if (supportTerms && !supportTerms.value.trim()) {
+    supportTerms.value = dedupeTerms(groups.slice(1).flat()).join('\n');
+  }
+  if (pubmedQuery && !pubmedQuery.value.trim()) {
+    pubmedQuery.value = config.pubmed_query || '';
+  }
+  if (lookbackDays && !lookbackDays.value) {
+    lookbackDays.value = String(config.rxiv_lookback_days ?? 30);
+  }
+}
+
+function collectTargetStudioConfig() {
+  const label = document.getElementById('studioCategoryLabel')?.value.trim() || '';
+  const paperSources = getSelectedTargetSources();
+  const researchFocus = getSelectedResearchFocus();
+  const coreTerms = dedupeTerms(splitMultilineTerms(document.getElementById('studioCoreTerms')?.value || ''));
+  const supportTerms = dedupeTerms(splitMultilineTerms(document.getElementById('studioSupportTerms')?.value || ''));
+  const manualQuery = document.getElementById('studioPubmedQuery')?.value.trim() || '';
+  const lookbackRaw = document.getElementById('studioLookbackDays')?.value.trim() || '';
+  const lookbackDays = Number.parseInt(lookbackRaw, 10);
+
+  if (!label) {
+    throw new Error('请先生成或填写研究类别名。');
+  }
+  if (!paperSources.length) {
+    throw new Error('请至少选择一个论文源。');
+  }
+  if (!manualQuery || coreTerms.length === 0 || supportTerms.length === 0) {
+    throw new Error('请先点击 `Generate With AI`，或者手动补全 Terms 和 PubMed Query。');
+  }
+
+  const pubmedQuery = manualQuery || buildAutoPubmedQuery(coreTerms, supportTerms);
+  const keywordGroupsText = [coreTerms.join(' | '), supportTerms.join(' | ')].filter(Boolean).join('\n');
+  const keywordsText = dedupeTerms([...coreTerms, ...supportTerms]).join('\n');
+  const existing = controlStateCache || normalizeControlConfig({});
+
+  return {
+    paper_sources: paperSources.join(', '),
+    research_focus: researchFocus,
+    arxiv_categories: existing.arxiv_categories || '',
+    biorxiv_categories: existing.biorxiv_categories || '',
+    medrxiv_categories: existing.medrxiv_categories || '',
+    rxiv_lookback_days: Number.isFinite(lookbackDays) && lookbackDays > 0
+      ? lookbackDays
+      : (existing.rxiv_lookback_days || 30),
+    keywords_text: keywordsText,
+    keyword_groups_text: keywordGroupsText,
+    pubmed_query: pubmedQuery,
+    pubmed_label: label,
+    pubmed_retmax: existing.pubmed_retmax || 200,
+    pubmed_date_type: existing.pubmed_date_type || 'pdat',
+    llm_model_name: existing.llm_model_name || '',
+    llm_language: existing.llm_language || '',
+    llm_openai_base_url: existing.llm_openai_base_url || '',
+  };
+}
+
+function openTargetStudioModal() {
+  const modal = document.getElementById('targetStudioModal');
+  if (!modal) {
+    return;
+  }
+  toggleSourceDropdown(false);
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTargetStudioModal() {
+  const modal = document.getElementById('targetStudioModal');
+  if (!modal) {
+    return;
+  }
+  toggleSourceDropdown(false);
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function toggleSourceDropdown(forceOpen = null) {
+  const trigger = document.getElementById('studioSourceTrigger');
+  const dropdown = document.getElementById('studioSourceDropdown');
+
+  if (!trigger || !dropdown) {
+    return;
+  }
+
+  const shouldOpen = forceOpen === null
+    ? !dropdown.classList.contains('open')
+    : Boolean(forceOpen);
+
+  dropdown.classList.toggle('open', shouldOpen);
+  trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+async function generateTargetPlan() {
+  if (!controlApiAvailable) {
+    showNotification('本地控制 API 不可用，请先启动 `uv run python local_console.py`。', 'error');
+    return;
+  }
+
+  const target = document.getElementById('studioTargetInput')?.value.trim() || '';
+  const disease = document.getElementById('studioDiseaseInput')?.value.trim() || '';
+  const paperSources = getSelectedTargetSources();
+  const researchFocus = getSelectedResearchFocus();
+
+  if (!target) {
+    showNotification('请先填写 Target。', 'error');
+    return;
+  }
+  if (!paperSources.length) {
+    showNotification('请至少选择一个论文源。', 'error');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/control/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target,
+        disease,
+        paper_sources: paperSources.join(','),
+        research_focus: researchFocus,
+      }),
+    });
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || `HTTP ${response.status}`);
+    }
+
+    const plan = result.plan || {};
+    document.getElementById('studioCategoryLabel').value = plan.category_label || '';
+    document.getElementById('studioCoreTerms').value = Array.isArray(plan.core_terms)
+      ? plan.core_terms.join('\n')
+      : '';
+    document.getElementById('studioSupportTerms').value = Array.isArray(plan.supporting_terms)
+      ? plan.supporting_terms.join('\n')
+      : '';
+    document.getElementById('studioPubmedQuery').value = plan.pubmed_query || '';
+
+    showNotification(plan.strategy_note || 'AI 研究方案已生成。', 'success');
+  } catch (error) {
+    showNotification(`生成失败：${error.message || error}`, 'error');
+  }
+}
+
+function initializeTargetStudio() {
+  const openButton = document.getElementById('openTargetStudio');
+  const closeButton = document.getElementById('closeTargetStudio');
+  const modal = document.getElementById('targetStudioModal');
+  const saveButton = document.getElementById('saveTargetStudio');
+  const crawlButton = document.getElementById('runTargetCrawl');
+  const fullButton = document.getElementById('runTargetFull');
+  const generateButton = document.getElementById('generateTargetPlan');
+  const sourceTrigger = document.getElementById('studioSourceTrigger');
+
+  openButton?.addEventListener('click', () => {
+    if (controlStateCache) {
+      populateTargetStudio(controlStateCache);
+    }
+    openTargetStudioModal();
+  });
+  closeButton?.addEventListener('click', closeTargetStudioModal);
+  modal?.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeTargetStudioModal();
+    }
+  });
+  document.querySelectorAll('#studioSourceDropdown input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSourceSummary);
+  });
+  sourceTrigger?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleSourceDropdown();
+  });
+  document.addEventListener('click', (event) => {
+    const multiselect = document.getElementById('studioSourceMultiselect');
+    if (!multiselect) {
+      return;
+    }
+    if (!multiselect.contains(event.target)) {
+      toggleSourceDropdown(false);
+    }
+  });
+  generateButton?.addEventListener('click', generateTargetPlan);
+  saveButton?.addEventListener('click', async () => {
+    if (!controlApiAvailable) {
+      showNotification('本地控制 API 不可用，请先启动 `uv run python local_console.py`。', 'error');
+      return;
+    }
+
+    try {
+      await saveTargetStudio();
+    } catch (error) {
+      showNotification(`保存失败：${error.message || error}`, 'error');
+    }
+  });
+  crawlButton?.addEventListener('click', () => runTargetStudio('crawl'));
+  fullButton?.addEventListener('click', () => runTargetStudio('full'));
+}
+
+async function saveTargetStudio(options = {}) {
+  const { silent = false } = options;
+  const payload = collectTargetStudioConfig();
+
+  const response = await fetch('/api/control/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(result.message || `HTTP ${response.status}`);
+  }
+
+  controlStateCache = normalizeControlConfig(result.config || {});
+  populateTargetStudio(controlStateCache);
+
+  if (!silent) {
+    showNotification('新的靶点配置已写入后端。', 'success');
+  }
+  return result;
+}
+
+async function runTargetStudio(action) {
+  if (!controlApiAvailable) {
+    showNotification('本地控制 API 不可用，请先启动 `uv run python local_console.py`。', 'error');
+    return;
+  }
+
+  try {
+    await saveTargetStudio({ silent: true });
+
+    const response = await fetch('/api/control/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    const result = await response.json();
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message || `HTTP ${response.status}`);
+    }
+
+    closeTargetStudioModal();
+    showNotification(
+      action === 'full' ? '已启动自动化分析流程。' : '已启动新的爬虫任务。',
+      'success',
+    );
+    refreshControlState({ hydrateStudio: false, silent: true });
+  } catch (error) {
+    showNotification(`启动失败：${error.message || error}`, 'error');
+  }
+}
+
+async function maybeRefreshLatestBatch(job, files) {
+  const latestEnhanced = (files || []).find(file =>
+    /_AI_enhanced_(Chinese|English)\.jsonl$/.test(file.name)
+  );
+
+  if (!latestEnhanced) {
+    return;
+  }
+
+  const latestSignature = `${latestEnhanced.name}:${latestEnhanced.updated_at || ''}`;
+  const successSignature = job && !job.running && job.exit_code === 0 && job.action === 'full'
+    ? `${job.action}:${job.finished_at || job.started_at || ''}`
+    : '';
+  const shouldRefreshDates = latestSignature !== latestEnhancedOutputSignature
+    || (successSignature && successSignature !== latestSuccessfulControlRun);
+
+  if (!shouldRefreshDates) {
+    return;
+  }
+
+  latestEnhancedOutputSignature = latestSignature;
+  if (successSignature) {
+    latestSuccessfulControlRun = successSignature;
+  }
+
+  const previousLatestDate = availableDates[0] || '';
+  const dates = await fetchAvailableDates();
+  const latestDate = dates?.[0] || '';
+
+  if (!latestDate) {
+    return;
+  }
+
+  const shouldAutoloadLatest = !currentDate
+    || currentDate === previousLatestDate
+    || !availableDates.includes(currentDate);
+
+  if (shouldAutoloadLatest) {
+    loadPapersByDate(latestDate);
+  }
+}
+
+async function refreshControlState(options = {}) {
+  const { hydrateStudio = false, silent = false } = options;
+
+  try {
+    const response = await fetch('/api/control/state', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const payload = await response.json();
+    controlApiAvailable = true;
+    controlStateCache = normalizeControlConfig(payload.config || {});
+
+    if (hydrateStudio) {
+      populateTargetStudio(controlStateCache);
+    }
+
+    const job = payload.job || {};
+    const status = getJobStateCopy(job);
+    updateStatusPill(document.getElementById('inlineJobStatus'), status.status, status.label);
+    setTargetStudioStatus(status.detail);
+
+    await maybeRefreshLatestBatch(job, payload.files || []);
+  } catch (error) {
+    controlApiAvailable = false;
+    const status = getJobStateCopy(null);
+    updateStatusPill(document.getElementById('inlineJobStatus'), status.status, status.label);
+    setTargetStudioStatus(status.detail);
+
+    if (!silent) {
+      showNotification(`本地控制接口不可用：${error.message || error}`, 'error');
+    }
+  }
+}
+
+function showNotification(message, type = 'info') {
+  const node = document.createElement('div');
+  node.className = `app-notification ${type}`;
+  node.textContent = message;
+  document.body.appendChild(node);
+
+  requestAnimationFrame(() => node.classList.add('visible'));
+
+  window.setTimeout(() => {
+    node.classList.remove('visible');
+    window.setTimeout(() => node.remove(), 250);
+  }, 2800);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
+  initializeTargetStudio();
 
   // 加载用户关键词
   loadUserKeywords();
@@ -422,12 +1004,20 @@ document.addEventListener('DOMContentLoaded', () => {
   urlJsonParam = getJsonParam();
   urlAuthorParam = getUrlAuthor();
   urlKeywordsParam = getUrlKeywords();
+  if (urlCategoryParam && !isJsonMode()) {
+    currentCategory = urlCategoryParam;
+  }
 
   fetchAvailableDates().then(() => {
     if (availableDates.length > 0) {
       loadPapersByDate(availableDates[0]);
     }
   });
+
+  refreshControlState({ hydrateStudio: true, silent: true });
+  controlPollTimer = window.setInterval(() => {
+    refreshControlState({ hydrateStudio: false, silent: true });
+  }, 2500);
 });
 
 function initEventListeners() {
@@ -490,6 +1080,7 @@ function initEventListeners() {
     if (event.key === 'Escape') {
       const paperModal = document.getElementById('paperModal');
       const datePickerModal = document.getElementById('datePickerModal');
+      const targetStudioModal = document.getElementById('targetStudioModal');
       
       // 关闭论文模态框
       if (paperModal.classList.contains('active')) {
@@ -498,6 +1089,9 @@ function initEventListeners() {
       // 关闭日期选择器模态框
       else if (datePickerModal.classList.contains('active')) {
         toggleDatePicker();
+      }
+      else if (targetStudioModal.classList.contains('active')) {
+        closeTargetStudioModal();
       }
     }
     // 左右箭头键导航论文（仅在论文模态框打开时）
@@ -722,7 +1316,7 @@ async function fetchAvailableDates() {
   try {
     // 从 data 分支获取文件列表
     const fileListUrl = DATA_CONFIG.getDataUrl('assets/file-list.txt');
-    const response = await fetch(fileListUrl);
+    const response = await fetch(fileListUrl, { cache: 'no-store' });
     if (!response.ok) {
       console.error('Error fetching file list:', response.status);
       return [];
@@ -785,8 +1379,7 @@ function initDatePicker() {
         const dateStr = date.getFullYear() + "-" +
                         String(date.getMonth() + 1).padStart(2, '0') + "-" +
                         String(date.getDate()).padStart(2, '0');
-        // 在 availableDates[0] 之后的日期全部返回 false，否则返回 true
-        return dateStr <= availableDates[0];
+        return Boolean(enabledDatesMap[dateStr]);
       }
     ],
     onChange: function(selectedDates, dateStr) {
@@ -825,12 +1418,19 @@ function toggleRangeMode() {
   
   if (flatpickrInstance) {
     flatpickrInstance.set('mode', isRangeMode ? 'range' : 'single');
+    if (isRangeMode && currentRangeStart && currentRangeEnd) {
+      flatpickrInstance.setDate([currentRangeStart, currentRangeEnd], false);
+    } else if (!isRangeMode && currentDate && availableDates.includes(currentDate)) {
+      flatpickrInstance.setDate(currentDate, false);
+    }
   }
 }
 
 async function loadPapersByDate(date) {
   currentDate = date;
-  document.getElementById('currentDate').textContent = formatDate(date);
+  currentRangeStart = '';
+  currentRangeEnd = '';
+  updateCrawlDateDisplay(formatDate(date), 'Crawl batch');
   
   // 更新日期选择器中的选中日期
   if (flatpickrInstance) {
@@ -852,7 +1452,7 @@ async function loadPapersByDate(date) {
     const selectedLanguage = selectLanguageForDate(date);
     // 从 data 分支获取数据文件
     const dataUrl = DATA_CONFIG.getDataUrl(`data/${date}_AI_enhanced_${selectedLanguage}.jsonl`);
-    const response = await fetch(dataUrl);
+    const response = await fetch(dataUrl, { cache: 'no-store' });
     // 如果文件不存在（例如返回 404），在论文展示区域提示没有论文
     if (!response.ok) {
       if (response.status === 404) {
@@ -887,10 +1487,10 @@ async function loadPapersByDate(date) {
     renderCategoryFilter(categories);
 
     // 如果URL中有category、json、author或keywords参数，直接返回JSON
-    const hasJsonParams = urlCategoryParam !== null || urlJsonParam !== null || urlAuthorParam !== null || urlKeywordsParam !== null;
+    const hasJsonParams = urlJsonParam !== null;
     if (hasJsonParams) {
       // 获取基础论文列表（按category或all）
-      const targetCategory = urlCategoryParam || urlJsonParam || 'all';
+      const targetCategory = urlJsonParam || urlCategoryParam || 'all';
       let papers = getPapersByCategory(paperData, targetCategory);
 
       // 应用keywords和author匹配（"或"关系）
@@ -1690,7 +2290,11 @@ function toggleDatePicker() {
     
     // 重新初始化日期选择器以确保它反映最新的可用日期
     if (flatpickrInstance) {
-      flatpickrInstance.setDate(currentDate, false);
+      if (isRangeMode && currentRangeStart && currentRangeEnd) {
+        flatpickrInstance.setDate([currentRangeStart, currentRangeEnd], false);
+      } else if (currentDate && availableDates.includes(currentDate)) {
+        flatpickrInstance.setDate(currentDate, false);
+      }
     }
   } else {
     document.body.style.overflow = '';
@@ -1718,12 +2322,14 @@ async function loadPapersByDateRange(startDate, endDate) {
   });
   
   if (validDatesInRange.length === 0) {
-    alert('No available papers in the selected date range.');
+    showNotification('选中的时间范围内没有可用的抓取批次。', 'info');
     return;
   }
   
   currentDate = `${startDate} to ${endDate}`;
-  document.getElementById('currentDate').textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  currentRangeStart = startDate;
+  currentRangeEnd = endDate;
+  updateCrawlDateDisplay(`${formatDate(startDate)} - ${formatDate(endDate)}`, 'Crawl window');
   
   // 不再重置激活的关键词和作者
   // 而是保持当前选择状态
@@ -1744,7 +2350,7 @@ async function loadPapersByDateRange(startDate, endDate) {
       const selectedLanguage = selectLanguageForDate(date);
       // 从 data 分支获取数据文件
       const dataUrl = DATA_CONFIG.getDataUrl(`data/${date}_AI_enhanced_${selectedLanguage}.jsonl`);
-      const response = await fetch(dataUrl);
+      const response = await fetch(dataUrl, { cache: 'no-store' });
       const text = await response.text();
       const dataPapers = parseJsonlData(text, date);
       
@@ -1764,10 +2370,10 @@ async function loadPapersByDateRange(startDate, endDate) {
     renderCategoryFilter(categories);
 
     // 如果URL中有category、json、author或keywords参数，直接返回JSON
-    const hasJsonParams = urlCategoryParam !== null || urlJsonParam !== null || urlAuthorParam !== null || urlKeywordsParam !== null;
+    const hasJsonParams = urlJsonParam !== null;
     if (hasJsonParams) {
       // 获取基础论文列表（按category或all）
-      const targetCategory = urlCategoryParam || urlJsonParam || 'all';
+      const targetCategory = urlJsonParam || urlCategoryParam || 'all';
       let papers = getPapersByCategory(paperData, targetCategory);
 
       // 应用keywords和author匹配（"或"关系）

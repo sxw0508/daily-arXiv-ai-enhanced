@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Daily Paper AI Enhanced - multi-source daily research digest">
-    <title>Daily Paper AI Enhanced</title>
+    <meta name="description" content="Target Research Paper AI Enhanced - multi-source daily research digest">
+    <title>Target Research Paper AI Enhanced</title>
     <link rel="icon" type="image/png" href="assets/logo2-removebg-preview.png">
     <link rel="shortcut icon" type="image/png" href="assets/logo2-removebg-preview.png">
     <link rel="stylesheet" href="css/styles.css">
@@ -13,8 +13,8 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <!-- Authentication Scripts -->
-    <script src="js/auth-config.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/auth-config.js?v=auth-1"></script>
+    <script src="js/auth.js?v=auth-1"></script>
     <!-- Data Source Configuration -->
     <script src="js/data-config.js"></script>
     <script src="js/site-config.js"></script>
@@ -60,15 +60,18 @@
                 
                 <div class="header-center">
                     <a href="index.html" class="site-logo">
-                        <img src="assets/logo2-removebg-preview.png" alt="Daily Paper AI Enhanced Logo" class="logo-image" data-site-logo-alt>
-                        <span class="site-title" data-site-title>Daily Paper AI Enhanced</span>
+                        <img src="assets/logo2-removebg-preview.png" alt="Target Research Paper AI Enhanced Logo" class="logo-image" data-site-logo-alt>
+                        <span class="site-title" data-site-title>Target Research Paper AI Enhanced</span>
                     </a>
                 </div>
                 
                 <div class="header-controls">
                     <div class="date-selector">
                         <div class="date-display">
-                            <span id="currentDate">Loading...</span>
+                            <div class="date-meta">
+                                <span class="date-caption" id="currentDateCaption">Latest crawl batch</span>
+                                <span id="currentDate">Loading crawl date...</span>
+                            </div>
                             <button id="calendarButton" class="icon-button">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M19 4H18V2H16V4H8V2H6V4H5C3.89 4 3.01 4.9 3.01 6L3 20C3 21.1 3.89 22 5 22H19C20.1 22 21 21.1 21 20V6C21 4.9 20.1 4 19 4ZM19 20H5V9H19V20ZM7 11H12V16H7V11Z" fill="currentColor"/>
@@ -110,6 +113,13 @@
                         <button class="category-button active" data-category="all">All</button>
                         <!-- 分类按钮将通过 JavaScript 动态生成 -->
                     </div>
+                    <div class="category-actions">
+                        <div id="inlineJobStatus" class="inline-status-pill">Idle</div>
+                        <button id="openTargetStudio" class="category-action-button">
+                            <span class="action-plus">+</span>
+                            <span>New Target</span>
+                        </button>
+                    </div>
                 </div>
                 <!-- Filter Tag Container -->
                 <div class="filter-label-container">
@@ -137,9 +147,9 @@
             <div class="date-picker-modal" id="datePickerModal">
                 <div class="date-picker-content">
                     <div class="date-picker-body">
-                        <h3 class="date-picker-title">Select Date</h3>
+                        <h3 class="date-picker-title">Select Crawl Date</h3>
                         <div class="flatpickr-container">
-                            <input type="text" id="datepicker" placeholder="Select Date" data-input>
+                            <input type="text" id="datepicker" placeholder="Select Crawl Date" data-input>
                         </div>
                         <div class="date-range-selector">
                             <span class="toggle-label">Range</span>
@@ -147,6 +157,126 @@
                                 <input type="checkbox" id="dateRangeMode">
                                 <span class="toggle-slider"></span>
                             </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="target-studio-modal" id="targetStudioModal">
+                <div class="target-studio-panel">
+                    <div class="target-studio-header">
+                        <div>
+                            <p class="target-studio-eyebrow">Target Studio</p>
+                            <h3>新增靶点类别</h3>
+                            <p class="target-studio-copy">这里配置的是当前研究主题的抓取范围、研究模式和自动化分析参数。保存后可以直接启动抓取或运行完整流程。</p>
+                        </div>
+                        <button id="closeTargetStudio" class="icon-button" title="Close">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="target-studio-body">
+                        <div class="target-studio-grid">
+                            <label class="studio-field">
+                                <span>Target</span>
+                                <input id="studioTargetInput" class="settings-inline-input" placeholder="例如：PD-L1 / EGFR / KRAS">
+                                <small>只输入一个核心靶点，AI 会自动扩展别名、基因名和相关命名。</small>
+                            </label>
+
+                            <label class="studio-field">
+                                <span>Disease</span>
+                                <input id="studioDiseaseInput" class="settings-inline-input" placeholder="例如：non-small cell lung cancer（可选）">
+                                <small>可选填写疾病、适应症或研究场景；不填时会按靶点和研究模式生成更通用的方案。</small>
+                            </label>
+
+                            <label class="studio-field">
+                                <span>Research Focus</span>
+                                <select id="studioResearchFocus" class="settings-inline-input">
+                                    <option value="antibody_therapeutics">Antibody Therapeutics</option>
+                                    <option value="adc">ADC</option>
+                                    <option value="bispecific_antibody">Bispecific Antibody</option>
+                                    <option value="general_target_biology">General Target Biology</option>
+                                </select>
+                                <small>默认按抗体药方向生成检索策略，并在保存配置时自动强化后端过滤。</small>
+                            </label>
+
+                            <label class="studio-field">
+                                <span>Paper Sources</span>
+                                <div class="source-multiselect" id="studioSourceMultiselect">
+                                    <button id="studioSourceTrigger" type="button" class="source-trigger" aria-expanded="false">
+                                        <span id="studioSourceSummary">Select sources</span>
+                                        <span class="source-trigger-icon">▾</span>
+                                    </button>
+                                    <div class="source-dropdown" id="studioSourceDropdown">
+                                        <label class="source-option">
+                                            <input type="checkbox" value="pubmed">
+                                            <span>PubMed</span>
+                                        </label>
+                                        <label class="source-option">
+                                            <input type="checkbox" value="biorxiv">
+                                            <span>bioRxiv</span>
+                                        </label>
+                                        <label class="source-option">
+                                            <input type="checkbox" value="medrxiv">
+                                            <span>medRxiv</span>
+                                        </label>
+                                        <label class="source-option">
+                                            <input type="checkbox" value="arxiv">
+                                            <span>arXiv</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <small>改成勾选模式。默认沿用当前配置，也可以只保留 `PubMed` 先验证方向。</small>
+                            </label>
+
+                            <label class="studio-field">
+                                <span>Lookback Days</span>
+                                <input id="studioLookbackDays" type="number" min="1" step="1" class="settings-inline-input" placeholder="30">
+                                <small>控制预印本和 PubMed 的回溯时间窗口。</small>
+                            </label>
+
+                            <div class="studio-action-card studio-field-span-2">
+                                <span>AI Research Plan</span>
+                                <p>输入 `Target`，并按需补充 `Disease` 后，使用你配置的大模型自动生成研究类别名、Target Terms、Supporting Terms 和 PubMed Query。</p>
+                                <button id="generateTargetPlan" class="button primary">Generate With AI</button>
+                            </div>
+
+                            <label class="studio-field studio-field-span-2">
+                                <span>Category Preview</span>
+                                <input id="studioCategoryLabel" class="settings-inline-input" placeholder="AI 生成后会显示研究类别名">
+                                <small>保存时会写入后端 `pubmed.label`，同时也会作为前端类别标签使用。</small>
+                            </label>
+
+                            <label class="studio-field studio-field-span-2">
+                                <span>Target Terms</span>
+                                <textarea id="studioCoreTerms" class="settings-inline-input studio-textarea" placeholder="每行一个核心靶点词，例如：&#10;PD-L1&#10;CD274&#10;Programmed Death-Ligand 1"></textarea>
+                                <small>由 AI 生成的第一组硬过滤词，通常是靶点名、别名、基因名。你也可以继续微调。</small>
+                            </label>
+
+                            <label class="studio-field studio-field-span-2">
+                                <span>Supporting Terms</span>
+                                <textarea id="studioSupportTerms" class="settings-inline-input studio-textarea" placeholder="每行一个辅助词，例如：&#10;antibody&#10;atezolizumab&#10;durvalumab"></textarea>
+                                <small>由 AI 生成的第二组硬过滤词，适合填疾病、药名、抗体、机制词。若选择抗体药模式，保存时系统还会自动补一组抗体模态硬过滤词。</small>
+                            </label>
+
+                            <label class="studio-field studio-field-span-2">
+                                <span>PubMed Query</span>
+                                <textarea id="studioPubmedQuery" class="settings-inline-input studio-query" placeholder="AI 生成后会显示 PubMed 检索式"></textarea>
+                                <small>这里仍然可以手动修正，但默认由 AI 按靶点与疾病自动生成。</small>
+                            </label>
+                        </div>
+
+                        <div class="target-studio-actions">
+                            <button id="saveTargetStudio" class="button">Save Target Config</button>
+                            <button id="runTargetCrawl" class="button">Start Crawl Only</button>
+                            <button id="runTargetFull" class="button primary">Start Automated Analysis</button>
+                        </div>
+
+                        <div class="target-studio-footnote">
+                            <strong>说明：</strong> `Start Automated Analysis` 会执行完整流程：抓取、去重、AI 总结、Markdown 和文件索引更新。<br>
+                            如果你只想先验证靶点词是否合理，先点 `Start Crawl Only`。
                         </div>
                     </div>
                 </div>
@@ -209,7 +339,7 @@
     
     <footer>
         <div class="footer-content">
-            <p>&copy; 2025 <span data-site-title>Daily Paper AI Enhanced</span> | Multi-source papers from <span data-source-summary>arXiv, bioRxiv, medRxiv, and PubMed</span>. | 内容由AI生成，请仔细甄别并自行核验。若发现不当内容，请及时反馈，我们会尽快处理。 | The content is generated by AI. Please verify it carefully. If you find inappropriate content, please report it and it will be handled promptly.</p>
+            <p>&copy; 2026 <span data-site-title>Target Research Paper AI Enhanced</span> | Multi-source papers from <span data-source-summary>arXiv, bioRxiv, medRxiv, and PubMed</span>. | 内容由AI生成，请仔细甄别并自行核验。若发现不当内容，请及时反馈，我们会尽快处理。 | The content is generated by AI. Please verify it carefully. If you find inappropriate content, please report it and it will be handled promptly.</p>
         </div>
     </footer>
 
@@ -220,6 +350,6 @@
         </svg>
     </button>
 
-    <script src="js/app.js?v=1.0.1"></script>
+    <script src="js/app.js?v=1.0.4"></script>
 </body>
 </html> 

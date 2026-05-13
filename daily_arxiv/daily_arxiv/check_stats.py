@@ -74,7 +74,7 @@ def perform_deduplication():
     """
 
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    today_file = f"../data/{today}.jsonl"
+    today_file = os.environ.get("CHECK_STATS_TARGET_FILE", "").strip() or f"../data/{today}.jsonl"
     history_days = 7  # 向前追溯几天的数据进行对比
 
     if not os.path.exists(today_file):

@@ -10,7 +10,7 @@ const DATA_CONFIG = {
     /**
      * Display name used across the frontend
      */
-    siteDisplayName: 'Daily Paper AI Enhanced',
+    siteDisplayName: 'Target Research Paper AI Enhanced',
 
     /**
      * Human-readable summary of supported sources

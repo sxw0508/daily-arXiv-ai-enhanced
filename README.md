@@ -1,4 +1,4 @@
-# Daily Paper AI Enhanced
+# Paper AI Enhanced
 
 一个面向论文追踪的多源爬取与 AI 增强项目。当前版本支持从 `arXiv`、`bioRxiv`、`medRxiv`、`PubMed` 抓取论文，做关键词硬过滤、AI 摘要增强，并用纯静态前端展示结果。
 

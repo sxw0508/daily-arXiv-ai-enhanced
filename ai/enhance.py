@@ -48,6 +48,10 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         调用 spam.dw-dengwei.workers.dev 接口检测内容是否包含敏感词。
         返回 True 表示触发敏感词，False 表示未触发。
         """
+        # 默认关闭外部敏感词检查；只有显式开启时才访问远端接口，
+        # 这样本地控制台和自动化流程在离线/受限网络环境下也能稳定运行。
+        if os.environ.get("ENABLE_SENSITIVE_CHECK", "").lower() not in {"1", "true", "yes"}:
+            return False
         if os.environ.get("DISABLE_SENSITIVE_CHECK", "").lower() in {"1", "true", "yes"}:
             return False
 
