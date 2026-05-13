@@ -138,16 +138,15 @@ uv run python -m http.server 8000
 
 此时 `/api/control/*` **不可用**，设置里的「保存 / 运行」会提示控制 API 未就绪。
 
-## 部署到公网服务器（概要）
+## 一键部署
 
-1. 安装 `git`、`nginx`、[`uv`](https://docs.astral.sh/uv/)，保证 **Python ≥ 3.12**，在服务器上 `git clone` 后执行 `uv sync --locked`。
-2. 配置好服务器上的 `daily_arxiv/config.local.yaml`（密钥等）以及按需修改的 `daily_arxiv/config.yaml`。
-3. 用 **systemd**（或同类进程管理）长期运行：`WorkingDirectory` 为项目根目录，`ExecStart` 使用 `uv run python local_console.py`（进程仍只监听本机 `127.0.0.1:8000`）。
-4. **Nginx**（或 Caddy）对外提供 80/443，将整站 **`proxy_pass` 到 `http://127.0.0.1:8000`**（路径需包含 `/api/`，不要只对静态文件配 `root` 而绕过控制台）。
-5. 爬取与 AI 可能耗时很长，为反代设置足够的 **`proxy_read_timeout`** / **`proxy_send_timeout`**，避免网关 504。
-6. **安全**：`/api/control/*` **没有内置登录鉴权**；`login.html` 等页面验证不能代替服务端保护。公网务必配合 **VPN、IP 白名单、Nginx 基本认证** 等之一，避免任意人触发爬取或改写 `config.yaml`。
+仓库提供一键部署脚本 [scripts/deploy_local_console.sh](./scripts/deploy_local_console.sh)：以 `sudo` 执行后会把 `local_console.py` 注册为 systemd 服务（`daily-arxiv-console`），由控制台进程自身监听 `LISTEN_HOST:LISTEN_PORT`（默认 `0.0.0.0:23324`），无需 Nginx。可通过 `FRONTEND_PASSWORD` 环境变量设置前端登录密码（脚本会把其 SHA-256 写入 `js/auth-config.js`）。
 
-**一键脚本（本机直挂端口，systemd 管理）**：在仓库中查看 [scripts/deploy_local_console.sh](./scripts/deploy_local_console.sh)（需 `sudo`；不装 Nginx，由 `local_console.py` 自身监听 `LISTEN_HOST:LISTEN_PORT`）。前端登录密码可通过 `FRONTEND_PASSWORD` 环境变量设置，脚本会把其 SHA-256 写入 `js/auth-config.js`。
+```bash
+sudo bash scripts/deploy_local_console.sh
+```
+
+> 注意：`/api/control/*` 没有服务端鉴权，仅由前端 `login.html` 拦截。若 `LISTEN_HOST` 暴露到公网，请额外配置防火墙、VPN 或反代鉴权。
 
 ## 前端说明
 
